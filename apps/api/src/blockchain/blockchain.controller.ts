@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, Param, UseGuards } from '@nestjs/common';
-import { BlockchainService } from './blockchain.service';
+import { BlockchainService, WalletCreationResult, WalletBalance, TransferResult, StakeResult } from './blockchain.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 
@@ -20,12 +20,12 @@ export class BlockchainController {
   constructor(private readonly blockchainService: BlockchainService) {}
 
   @Post('create')
-  async createWallet(@GetUser() user: any) {
+  async createWallet(@GetUser() user: any): Promise<WalletCreationResult> {
     return this.blockchainService.createWallet(user.id);
   }
 
   @Get('balance')
-  async getBalance(@GetUser() user: any) {
+  async getBalance(@GetUser() user: any): Promise<WalletBalance> {
     return this.blockchainService.getBalance(user.id);
   }
 
@@ -33,7 +33,7 @@ export class BlockchainController {
   async transferCoins(
     @GetUser() user: any,
     @Body() transferDto: TransferCoinsDto
-  ) {
+  ): Promise<TransferResult> {
     const { toAddress, amount, memo } = transferDto;
 
     if (!toAddress || !amount) {
@@ -58,7 +58,7 @@ export class BlockchainController {
   async stakeCoins(
     @GetUser() user: any,
     @Body() stakeDto: StakeCoinsDto
-  ) {
+  ): Promise<StakeResult> {
     const { amount, duration } = stakeDto;
 
     if (!amount || !duration) {
@@ -81,7 +81,7 @@ export class BlockchainController {
   }
 
   @Post('unstake')
-  async unstakeCoins(@GetUser() user: any) {
+  async unstakeCoins(@GetUser() user: any): Promise<TransferResult> {
     return this.blockchainService.unstakeCoins(user.id);
   }
 
@@ -177,7 +177,7 @@ export class BlockchainController {
   async sendToUser(
     @GetUser() user: any,
     @Body() body: { username: string; amount: string; memo?: string }
-  ) {
+  ): Promise<TransferResult> {
     const { username, amount, memo } = body;
 
     if (!username || !amount) {
@@ -198,7 +198,7 @@ export class BlockchainController {
   }
 
   @Get('portfolio')
-  async getPortfolio(@GetUser() user: any) {
+  async getPortfolio(@GetUser() user: any): Promise<WalletBalance> {
     const balance = await this.blockchainService.getBalance(user.id);
     const transactions = await this.blockchainService.getUserTransactions(user.id, 1, 10);
 

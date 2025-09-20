@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
-import { CommunityService } from './community.service';
+import { CommunityService, CircleWithStats } from './community.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 
@@ -21,7 +21,7 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('circles')
-  async getUserCircles(@GetUser() user: any) {
+  async getUserCircles(@GetUser() user: any): Promise<CircleWithStats[]> {
     return this.communityService.getUserCircles(user.id);
   }
 
@@ -159,7 +159,17 @@ export class CommunityController {
   }
 
   @Get('my-activity')
-  async getMyActivity(@GetUser() user: any) {
+  async getMyActivity(@GetUser() user: any): Promise<{
+    totalCircles: number;
+    activeCircles: number;
+    totalUnread: number;
+    recentCircles: CircleWithStats[];
+    achievements: {
+      socialButterfly: boolean;
+      communityBuilder: boolean;
+      activeParticipant: boolean;
+    };
+  }> {
     // Get user's recent activity across all circles
     const circles = await this.communityService.getUserCircles(user.id);
 

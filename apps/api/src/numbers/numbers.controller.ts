@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
-import { NumbersService } from './numbers.service';
+import { NumbersService, GematriaResult, NumerologyResult, BiblicalCycle } from './numbers.service';
 
 @Controller('numbers')
 export class NumbersController {
@@ -9,7 +9,7 @@ export class NumbersController {
   async calculateGematria(
     @Query('text') text: string,
     @Query('method') method: 'standard' | 'small' | 'reversed' = 'standard'
-  ) {
+  ): Promise<GematriaResult> {
     if (!text) {
       throw new Error('Text parameter is required');
     }
@@ -18,7 +18,7 @@ export class NumbersController {
   }
 
   @Get('numerology/:number')
-  async getNumerologyMeaning(@Param('number') numberParam: string) {
+  async getNumerologyMeaning(@Param('number') numberParam: string): Promise<NumerologyResult> {
     const number = parseInt(numberParam);
     if (isNaN(number)) {
       throw new Error('Invalid number provided');
@@ -28,7 +28,7 @@ export class NumbersController {
   }
 
   @Get('biblical-cycles')
-  async getBiblicalCycles() {
+  async getBiblicalCycles(): Promise<BiblicalCycle[]> {
     return this.numbersService.getBiblicalCycles();
   }
 
@@ -51,7 +51,14 @@ export class NumbersController {
   }
 
   @Get('compare')
-  async compareGematria(@Query('text1') text1: string, @Query('text2') text2: string) {
+  async compareGematria(@Query('text1') text1: string, @Query('text2') text2: string): Promise<{
+    text1: GematriaResult;
+    text2: GematriaResult;
+    equal: boolean;
+    difference: number;
+    ratio: number | null;
+    patterns: any[];
+  }> {
     if (!text1 || !text2) {
       throw new Error('Both text1 and text2 parameters are required');
     }
@@ -78,7 +85,13 @@ export class NumbersController {
   }
 
   @Get('sacred-numbers')
-  async getSacredNumbers() {
+  async getSacredNumbers(): Promise<Array<{
+    number: number;
+    meaning: NumerologyResult;
+    gematria: {
+      examples: string[];
+    };
+  }>> {
     const sacredNumbers = [1, 3, 7, 12, 13, 18, 26, 40, 50, 70, 72, 144, 153, 666, 777, 888];
 
     return sacredNumbers.map(num => ({
@@ -108,7 +121,18 @@ export class NumbersController {
   }
 
   @Get('calculate-date')
-  async calculateDateGematria(@Query('date') dateString: string) {
+  async calculateDateGematria(@Query('date') dateString: string): Promise<{
+    date: string;
+    components: {
+      year: { value: number; gematria: GematriaResult };
+      month: { value: number; gematria: GematriaResult };
+      day: { value: number; gematria: GematriaResult };
+    };
+    total: number;
+    reduced: number;
+    meaning: NumerologyResult;
+    patterns: any[];
+  }> {
     if (!dateString) {
       throw new Error('Date parameter is required (YYYY-MM-DD format)');
     }

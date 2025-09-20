@@ -1,17 +1,17 @@
 import { Controller, Get, Query, Param, Post, Body } from '@nestjs/common';
-import { CalendarService } from './calendar.service';
+import { CalendarService, HebrewDate, SunsetTimes, BiblicalFeast } from './calendar.service';
 
 @Controller('calendar')
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
   @Get('current')
-  async getCurrentHebrewDate() {
+  async getCurrentHebrewDate(): Promise<HebrewDate> {
     return this.calendarService.getCurrentHebrewDate();
   }
 
   @Get('hebrew-date')
-  async getHebrewDate(@Query('date') date: string) {
+  async getHebrewDate(@Query('date') date: string): Promise<HebrewDate> {
     const gregorianDate = date ? new Date(date) : new Date();
     return this.calendarService.getHebrewDate(gregorianDate);
   }
@@ -21,7 +21,7 @@ export class CalendarController {
     @Query('latitude') latitude: string,
     @Query('longitude') longitude: string,
     @Query('date') date?: string
-  ) {
+  ): Promise<SunsetTimes> {
     if (!latitude || !longitude) {
       throw new Error('Latitude and longitude are required');
     }
@@ -34,13 +34,13 @@ export class CalendarController {
   }
 
   @Get('upcoming-feasts')
-  async getUpcomingFeasts(@Query('count') count?: string) {
+  async getUpcomingFeasts(@Query('count') count?: string): Promise<BiblicalFeast[]> {
     const countNum = count ? parseInt(count) : 5;
     return this.calendarService.getUpcomingFeasts(countNum);
   }
 
   @Get('feasts/:year')
-  async getFeastsForYear(@Param('year') year: string) {
+  async getFeastsForYear(@Param('year') year: string): Promise<BiblicalFeast[]> {
     const yearNum = parseInt(year);
     if (isNaN(yearNum)) {
       throw new Error('Invalid year provided');
@@ -63,7 +63,7 @@ export class CalendarController {
   }
 
   @Get('feast/:name')
-  async getFeastByName(@Param('name') name: string) {
+  async getFeastByName(@Param('name') name: string): Promise<BiblicalFeast> {
     return this.calendarService.getFeastByName(name);
   }
 
@@ -89,7 +89,14 @@ export class CalendarController {
   async getTodayInfo(
     @Query('latitude') latitude?: string,
     @Query('longitude') longitude?: string
-  ) {
+  ): Promise<{
+    gregorianDate: string;
+    hebrewDate: HebrewDate;
+    isSabbath: boolean;
+    isNewMoon: boolean;
+    upcomingFeasts: BiblicalFeast[];
+    sabbathTimes: SunsetTimes | null;
+  }> {
     const today = new Date();
     const hebrewDate = await this.calendarService.getCurrentHebrewDate();
     const isSabbath = await this.calendarService.isSabbath();
