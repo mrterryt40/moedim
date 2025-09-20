@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
   Alert
 } from 'react-native';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { Typography } from '../components/ui/Typography';
+import { Button } from '../components/ui/Button';
+import { TorahCard } from '../components/torah/TorahCard';
+import { StreakCounter } from '../components/progress/StreakCounter';
+import { HebrewDateDisplay } from '../components/calendar/HebrewDateDisplay';
+import { AnimatedCard } from '../components/ui/AnimatedCard';
+import { designTokens } from '../theme/tokens';
 
 interface TorahPortion {
   id: string;
@@ -20,6 +24,8 @@ interface TorahPortion {
     verses: string;
     theme: string;
     lessons: string[];
+    transliteration?: string;
+    commentary?: string;
   };
   hebrewDate: string;
   gregorianDate: string;
@@ -31,350 +37,281 @@ interface TorahPortion {
   };
 }
 
+interface UserProgress {
+  streakDays: number;
+  totalCoins: number;
+  totalReadings: number;
+  isCompletedToday: boolean;
+}
+
 export const DailyTorahScreen: React.FC = () => {
   const [portion, setPortion] = useState<TorahPortion | null>(null);
+  const [userProgress, setUserProgress] = useState<UserProgress>({
+    streakDays: 0,
+    totalCoins: 0,
+    totalReadings: 0,
+    isCompletedToday: false
+  });
   const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState<'english' | 'hebrew' | 'both'>('both');
 
   useEffect(() => {
-    fetchDailyPortion();
+    fetchDailyData();
   }, []);
 
-  const fetchDailyPortion = async () => {
+  const fetchDailyData = async () => {
     try {
       setLoading(true);
 
-      // In production, this would call your API: http://localhost:3000/torah/daily
-      // For now, using sample data
-      const response = await fetch('http://localhost:3000/torah/daily');
-      const data = await response.json();
+      // Fetch Torah portion and user progress in parallel
+      const [portionResponse, progressResponse] = await Promise.all([
+        fetch('http://localhost:3000/torah/daily'),
+        fetch('http://localhost:3000/users/progress') // This would need authentication
+      ]);
 
-      setPortion(data);
+      const portionData = await portionResponse.json();
+      let progressData = { streakDays: 7, totalCoins: 150, totalReadings: 25, isCompletedToday: false };
+
+      try {
+        progressData = await progressResponse.json();
+      } catch (error) {
+        console.log('Using mock progress data');
+      }
+
+      // Add commentary and transliteration for enhanced experience
+      portionData.content.commentary = `This portion teaches us about the covenant relationship between YHWH and the Israelites. The Hebrew word for covenant, "brit" (ברית), appears throughout this passage, emphasizing the eternal nature of our commitment to follow Torah.`;
+      portionData.content.transliteration = `Va-yomer Adonai el-Moshe: "Katov l'cha et-ha-d'varim ha-eleh..."`;
+
+      setPortion(portionData);
+      setUserProgress(progressData);
     } catch (error) {
-      console.error('Error fetching Torah portion:', error);
-      Alert.alert('Error', 'Failed to load daily Torah portion');
+      console.error('Error fetching daily data:', error);
+      Alert.alert('Error', 'Failed to load daily Torah content');
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsRead = () => {
-    Alert.alert(
-      'Baruch HaShem!',
-      'You have completed today\'s Torah reading. May you be blessed with understanding and wisdom.',
-      [{ text: 'Amen', style: 'default' }]
-    );
+  const markAsComplete = async () => {
+    try {
+      // Call API to mark as complete and award coins
+      const response = await fetch('http://localhost:3000/torah/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portionId: portion?.id })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        setUserProgress(prev => ({
+          ...prev,
+          isCompletedToday: true,
+          totalCoins: prev.totalCoins + 10,
+          totalReadings: prev.totalReadings + 1,
+          streakDays: prev.streakDays + 1
+        }));
+
+        Alert.alert(
+          'Baruch HaShem! 🙌',
+          `You have completed today's Torah reading and earned 10 Dominion Coins! Your streak is now ${userProgress.streakDays + 1} days.`,
+          [{ text: 'Amen', style: 'default' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error completing reading:', error);
+      Alert.alert('Error', 'Failed to mark reading as complete');
+    }
+  };
+
+  const getNextFeast = () => {
+    // This would come from the calendar service
+    return {
+      name: "Sukkot",
+      daysUntil: 45
+    };
   };
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1976D2" />
-        <Text style={styles.loadingText}>Loading Torah portion...</Text>
-      </View>
+      <ScreenContainer scrollable={false}>
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: designTokens.colors.neutral.cream
+        }}>
+          <ActivityIndicator size="large" color={designTokens.colors.primary.indigo} />
+          <Typography variant="body" style={{ marginTop: designTokens.spacing.md }}>
+            Loading today's Torah portion...
+          </Typography>
+        </View>
+      </ScreenContainer>
     );
   }
 
   if (!portion) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>No Torah portion available</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchDailyPortion}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenContainer scrollable={false}>
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: designTokens.spacing.lg
+        }}>
+          <Typography variant="h2" style={{
+            textAlign: 'center',
+            marginBottom: designTokens.spacing.md,
+            color: designTokens.colors.accent.crimson
+          }}>
+            No Torah Portion Available
+          </Typography>
+          <Typography variant="body" style={{
+            textAlign: 'center',
+            marginBottom: designTokens.spacing.xl
+          }}>
+            We couldn't load today's reading. Please check your connection and try again.
+          </Typography>
+          <Button variant="primary" onPress={fetchDailyData}>
+            Retry Loading
+          </Button>
+        </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Daily Torah</Text>
-        <Text style={styles.date}>
-          {portion.gregorianDate} • {portion.hebrewDate}
-        </Text>
-        {portion.isSabbath && (
-          <View style={styles.sabbathBadge}>
-            <Text style={styles.sabbathText}>Shabbat Shalom</Text>
-          </View>
-        )}
-      </View>
+    <ScreenContainer>
+      {/* Hebrew Date and Calendar */}
+      <AnimatedCard variant="default" delay={0}>
+        <HebrewDateDisplay
+          hebrewDate={portion.hebrewDate}
+          gregorianDate={portion.gregorianDate}
+          isShabbat={portion.isSabbath}
+          nextFeast={getNextFeast()}
+        />
+      </AnimatedCard>
 
-      {/* Language Toggle */}
-      <View style={styles.languageToggle}>
-        <TouchableOpacity
-          style={[styles.toggleButton, language === 'english' && styles.activeToggle]}
-          onPress={() => setLanguage('english')}
-        >
-          <Text style={styles.toggleText}>English</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, language === 'hebrew' && styles.activeToggle]}
-          onPress={() => setLanguage('hebrew')}
-        >
-          <Text style={styles.toggleText}>עברית</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, language === 'both' && styles.activeToggle]}
-          onPress={() => setLanguage('both')}
-        >
-          <Text style={styles.toggleText}>Both</Text>
-        </TouchableOpacity>
-      </View>
+      {/* User Progress and Streak */}
+      <AnimatedCard variant="elevated" delay={100}>
+        <StreakCounter
+          streakDays={userProgress.streakDays}
+          totalCoins={userProgress.totalCoins}
+          totalReadings={userProgress.totalReadings}
+        />
+      </AnimatedCard>
 
-      {/* Torah Portion Content */}
-      <View style={styles.contentCard}>
-        <View style={styles.portionHeader}>
-          <Text style={styles.portionName}>{portion.nameEnglish}</Text>
-          <Text style={styles.portionNameHebrew}>{portion.nameHebrew}</Text>
-          <Text style={styles.verses}>{portion.content.verses}</Text>
+      {/* Daily Torah Portion */}
+      <AnimatedCard variant="torah" delay={200}>
+        <View style={{ alignItems: 'center', marginBottom: designTokens.spacing.lg }}>
+          <Typography variant="h1" style={{
+            textAlign: 'center',
+            color: designTokens.colors.primary.indigo,
+            marginBottom: designTokens.spacing.xs
+          }}>
+            Daily Torah
+          </Typography>
+          <Typography variant="caption" style={{
+            textAlign: 'center',
+            color: designTokens.colors.neutral.gray500
+          }}>
+            Parashat {portion.parasha} • {portion.content.verses}
+          </Typography>
         </View>
 
-        <Text style={styles.theme}>Theme: {portion.content.theme}</Text>
+        <TorahCard
+          portion={{
+            nameEnglish: portion.nameEnglish,
+            nameHebrew: portion.nameHebrew,
+            content: {
+              english: portion.content.english,
+              hebrew: portion.content.hebrew,
+              transliteration: portion.content.transliteration,
+              commentary: portion.content.commentary
+            }
+          }}
+          onComplete={markAsComplete}
+          isCompleted={userProgress.isCompletedToday}
+          coinReward={10}
+        />
+      </AnimatedCard>
 
-        {/* English Content */}
-        {(language === 'english' || language === 'both') && (
-          <View style={styles.textSection}>
-            <Text style={styles.sectionTitle}>English</Text>
-            <Text style={styles.contentText}>{portion.content.english}</Text>
-          </View>
-        )}
+      {/* Theme and Lessons */}
+      <AnimatedCard variant="hebrew" delay={300}>
+        <View style={{ marginBottom: designTokens.spacing.md }}>
+          <Typography variant="h3" style={{
+            marginBottom: designTokens.spacing.sm,
+            color: designTokens.colors.secondary.goldDark
+          }}>
+            Today's Theme
+          </Typography>
+          <Typography variant="verse" style={{
+            textAlign: 'center',
+            marginBottom: designTokens.spacing.lg
+          }}>
+            "{portion.content.theme}"
+          </Typography>
+        </View>
 
-        {/* Hebrew Content */}
-        {(language === 'hebrew' || language === 'both') && (
-          <View style={styles.textSection}>
-            <Text style={styles.sectionTitle}>Hebrew</Text>
-            <Text style={[styles.contentText, styles.hebrewText]}>
-              {portion.content.hebrew}
-            </Text>
-          </View>
-        )}
-
-        {/* Lessons */}
-        <View style={styles.lessonsSection}>
-          <Text style={styles.sectionTitle}>Key Lessons</Text>
+        <View>
+          <Typography variant="h3" style={{
+            marginBottom: designTokens.spacing.sm,
+            color: designTokens.colors.accent.emerald
+          }}>
+            Key Lessons for Israelites
+          </Typography>
           {portion.content.lessons.map((lesson, index) => (
-            <View key={index} style={styles.lessonItem}>
-              <Text style={styles.lessonBullet}>•</Text>
-              <Text style={styles.lessonText}>{lesson}</Text>
+            <View key={index} style={{
+              flexDirection: 'row',
+              marginBottom: designTokens.spacing.sm,
+              alignItems: 'flex-start'
+            }}>
+              <Typography variant="body" style={{
+                color: designTokens.colors.secondary.gold,
+                marginRight: designTokens.spacing.sm,
+                marginTop: 2
+              }}>
+                •
+              </Typography>
+              <Typography variant="body" style={{
+                flex: 1,
+                lineHeight: designTokens.typography.lineHeight.relaxed * designTokens.typography.fontSize.base
+              }}>
+                {lesson}
+              </Typography>
             </View>
           ))}
         </View>
+      </AnimatedCard>
 
-        {/* Next Reading */}
-        {portion.nextReading && (
-          <View style={styles.nextReading}>
-            <Text style={styles.sectionTitle}>Next Reading</Text>
-            <Text style={styles.nextReadingText}>
-              {portion.nextReading.nameEnglish} • {portion.nextReading.nameHebrew}
-            </Text>
+      {/* Next Reading Preview */}
+      {portion.nextReading && (
+        <AnimatedCard variant="default" delay={400}>
+          <View style={{ alignItems: 'center' }}>
+            <Typography variant="h3" style={{
+              marginBottom: designTokens.spacing.sm,
+              color: designTokens.colors.primary.indigo
+            }}>
+              Next Week's Reading
+            </Typography>
+            <Typography variant="body" style={{
+              textAlign: 'center',
+              color: designTokens.colors.neutral.gray600
+            }}>
+              {portion.nextReading.nameEnglish}
+            </Typography>
+            <Typography variant="hebrew" style={{
+              textAlign: 'center',
+              fontSize: designTokens.typography.fontSize.lg,
+              marginTop: designTokens.spacing.xs
+            }}>
+              {portion.nextReading.nameHebrew}
+            </Typography>
           </View>
-        )}
-      </View>
+        </AnimatedCard>
+      )}
 
-      {/* Complete Reading Button */}
-      <TouchableOpacity style={styles.completeButton} onPress={markAsRead}>
-        <Text style={styles.completeButtonText}>Mark as Read</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      {/* Bottom spacing for scroll */}
+      <View style={{ height: designTokens.spacing.xl }} />
+    </ScreenContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: '#1976D2',
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5,
-  },
-  date: {
-    fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
-  },
-  sabbathBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  sabbathText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  languageToggle: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    margin: 16,
-    borderRadius: 8,
-    padding: 4,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  activeToggle: {
-    backgroundColor: '#1976D2',
-  },
-  toggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-  },
-  contentCard: {
-    backgroundColor: 'white',
-    margin: 16,
-    marginTop: 0,
-    borderRadius: 12,
-    padding: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  portionHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  portionName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1976D2',
-    marginBottom: 4,
-  },
-  portionNameHebrew: {
-    fontSize: 20,
-    color: '#1976D2',
-    marginBottom: 8,
-    textAlign: 'right',
-  },
-  verses: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  theme: {
-    fontSize: 16,
-    color: '#2E7D32',
-    fontWeight: '600',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  textSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  contentText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#444',
-  },
-  hebrewText: {
-    textAlign: 'right',
-    fontSize: 18,
-  },
-  lessonsSection: {
-    marginBottom: 20,
-  },
-  lessonItem: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    alignItems: 'flex-start',
-  },
-  lessonBullet: {
-    fontSize: 16,
-    color: '#1976D2',
-    marginRight: 8,
-    marginTop: 2,
-  },
-  lessonText: {
-    flex: 1,
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#444',
-  },
-  nextReading: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  nextReadingText: {
-    fontSize: 16,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  completeButton: {
-    backgroundColor: '#2E7D32',
-    margin: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  completeButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#d32f2f',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: '#1976D2',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

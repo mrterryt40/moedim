@@ -51,6 +51,7 @@ model UserStudyProgress {
   completedAt  DateTime  @map("completed_at")
   score        Int?
   coinsEarned  Decimal   @default(0) @map("coins_earned") @db.Decimal(18, 8)
+  notes        String?
 
   user         User      @relation(fields: [userId], references: [id])
 
@@ -85,6 +86,7 @@ model UserCardReview {
   user           User      @relation(fields: [userId], references: [id])
   card           HebrewCard @relation(fields: [cardId], references: [id])
 
+  @@unique([userId, cardId])
   @@map("user_card_reviews")
 }
 

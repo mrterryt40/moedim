@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class TorahService {
   private prisma = new PrismaClient();
+
+  constructor(private blockchainService?: BlockchainService) {}
 
   async getDailyPortion(date?: string) {
     const targetDate = date ? new Date(date) : new Date();
@@ -22,7 +25,7 @@ export class TorahService {
     });
 
     if (!portion) {
-      return this.createSampleDailyPortion(hebrewDate);
+      return this.createSampleDailyPortion(hebrewDate, targetDate);
     }
 
     return {
@@ -64,16 +67,185 @@ export class TorahService {
   }
 
   async searchTorah(query: string, language: string = 'both') {
-    // Simple text search - can be enhanced with MeiliSearch later
+    // Enhanced search with content search
+    const whereClause = {
+      OR: [
+        { nameEnglish: { contains: query, mode: 'insensitive' } },
+        { nameHebrew: { contains: query } },
+        { parasha: { contains: query, mode: 'insensitive' } }
+      ]
+    };
+
+    // Add content search for JSON fields
+    if (language === 'english' || language === 'both') {
+      whereClause.OR.push(
+        { content: { path: ['english'], string_contains: query } }
+      );
+    }
+    if (language === 'hebrew' || language === 'both') {
+      whereClause.OR.push(
+        { content: { path: ['hebrew'], string_contains: query } }
+      );
+    }
+
     return this.prisma.torahPortion.findMany({
+      where: whereClause,
+      orderBy: { startDate: 'asc' }
+    });
+  }
+
+  async getPortionProgress(userId: string, portionId: string) {
+    return this.prisma.userStudyProgress.findFirst({
       where: {
-        OR: [
-          { nameEnglish: { contains: query, mode: 'insensitive' } },
-          { nameHebrew: { contains: query } },
-          { parasha: { contains: query, mode: 'insensitive' } }
-        ]
+        userId,
+        contentId: portionId,
+        contentType: 'torah'
       }
     });
+  }
+
+  async markPortionComplete(userId: string, portionId: string, notes?: string) {
+    // Check if already completed today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existingProgress = await this.prisma.userStudyProgress.findFirst({
+      where: {
+        userId,
+        contentId: portionId,
+        contentType: 'torah',
+        completedAt: {
+          gte: today
+        }
+      }
+    });
+
+    if (existingProgress) {
+      return { message: 'Torah portion already completed today', coinsEarned: 0 };
+    }
+
+    // Calculate coins earned (base 1.0 for Torah reading)
+    const coinsEarned = 1.0;
+
+    // Create progress record
+    await this.prisma.userStudyProgress.create({
+      data: {
+        userId,
+        contentId: portionId,
+        contentType: 'torah',
+        completedAt: new Date(),
+        score: 5, // Perfect score for reading
+        coinsEarned,
+        notes
+      }
+    });
+
+    // Update user total coins
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        totalCoins: {
+          increment: coinsEarned
+        }
+      }
+    });
+
+    // Update streak
+    await this.updateTorahStreak(userId);
+
+    // Mint blockchain rewards if service is available
+    if (this.blockchainService) {
+      try {
+        await this.blockchainService.mintReward(userId, coinsEarned, 'daily_torah');
+      } catch (error) {
+        console.error('Blockchain reward failed:', error);
+      }
+    }
+
+    return { message: 'Torah portion completed!', coinsEarned };
+  }
+
+  async getTorahStats(userId: string) {
+    const totalPortionsRead = await this.prisma.userStudyProgress.count({
+      where: {
+        userId,
+        contentType: 'torah'
+      }
+    });
+
+    const readToday = await this.prisma.userStudyProgress.count({
+      where: {
+        userId,
+        contentType: 'torah',
+        completedAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0))
+        }
+      }
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { streakDays: true }
+    });
+
+    return {
+      totalPortionsRead,
+      readToday,
+      currentStreak: user.streakDays
+    };
+  }
+
+  private async updateTorahStreak(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const readToday = await this.prisma.userStudyProgress.findFirst({
+      where: {
+        userId,
+        contentType: 'torah',
+        completedAt: {
+          gte: today
+        }
+      }
+    });
+
+    const readYesterday = await this.prisma.userStudyProgress.findFirst({
+      where: {
+        userId,
+        contentType: 'torah',
+        completedAt: {
+          gte: yesterday,
+          lt: today
+        }
+      }
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { streakDays: true }
+    });
+
+    let newStreak = user.streakDays;
+
+    if (readToday) {
+      if (readYesterday || user.streakDays === 0) {
+        newStreak = user.streakDays + 1;
+      }
+    } else if (!readYesterday && user.streakDays > 0) {
+      newStreak = 0; // Streak broken
+    }
+
+    if (newStreak !== user.streakDays) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { streakDays: newStreak }
+      });
+    }
+
+    return newStreak;
   }
 
   private convertToHebrewDate(gregorianDate: Date): string {
@@ -108,7 +280,7 @@ export class TorahService {
     });
   }
 
-  private createSampleDailyPortion(hebrewDate: string) {
+  private createSampleDailyPortion(hebrewDate: string, targetDate: Date) {
     // Sample data when no portion exists in database
     return {
       id: 'sample',
@@ -124,11 +296,17 @@ export class TorahService {
           'God as Creator of all things',
           'Human responsibility as stewards of creation',
           'The consequences of disobedience'
+        ],
+        commentary: 'This portion introduces the fundamental concepts of creation and divine sovereignty.',
+        questions: [
+          'What does it mean that humans are made in the image of God?',
+          'How does the Sabbath relate to creation?',
+          'What lessons can we learn from the story of Cain and Abel?'
         ]
       },
       hebrewDate,
-      gregorianDate: new Date().toISOString().split('T')[0],
-      isSabbath: new Date().getDay() === 6,
+      gregorianDate: targetDate.toISOString().split('T')[0],
+      isSabbath: targetDate.getDay() === 6,
       audioUrl: null,
       createdAt: new Date()
     };
