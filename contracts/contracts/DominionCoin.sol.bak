@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+
+contract DominionCoin is ERC20, Ownable, Pausable {
+    mapping(address => bool) public rewardsContracts;
+    mapping(address => uint256) public lastRewardTime;
+
+    uint256 public constant MAX_SUPPLY = 1000000000 * 10**18; // 1B coins
+    uint256 public constant DAILY_REWARD_LIMIT = 1000 * 10**18; // 1K per day per user
+
+    event RewardClaimed(address indexed user, uint256 amount, string reason);
+
+    constructor() ERC20("Dominion Coin", "DOM") {}
+
+    function addRewardsContract(address _contract) external onlyOwner {
+        rewardsContracts[_contract] = true;
+    }
+
+    function mintReward(address to, uint256 amount, string memory reason)
+        external
+        onlyRewardsContract
+    {
+        require(amount <= DAILY_REWARD_LIMIT, "Exceeds daily limit");
+        require(block.timestamp >= lastRewardTime[to] + 1 days, "Daily cooldown");
+        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
+
+        lastRewardTime[to] = block.timestamp;
+        _mint(to, amount);
+
+        emit RewardClaimed(to, amount, reason);
+    }
+
+    modifier onlyRewardsContract() {
+        require(rewardsContracts[msg.sender], "Not authorized rewards contract");
+        _;
+    }
+}

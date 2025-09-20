@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract BiblicalStaking is ReentrancyGuard, Ownable {
+    IERC20 public dominionCoin;
+
+    struct Stake {
+        uint256 amount;
+        uint256 duration; // in days
+        uint256 startTime;
+        uint256 rewardRate; // APY in basis points
+        bool withdrawn;
+    }
+
+    mapping(address => Stake[]) public userStakes;
+
+    // Biblical durations with special rates
+    mapping(uint256 => uint256) public durationRates;
+
+    event Staked(address indexed user, uint256 amount, uint256 duration);
+    event Withdrawn(address indexed user, uint256 stakeIndex, uint256 principal, uint256 rewards);
+
+    constructor(address _dominionCoin) {
+        dominionCoin = IERC20(_dominionCoin);
+
+        // Set biblical duration rates (in basis points, 100 = 1%)
+        durationRates[7] = 500;    // 7 days: 5% APY
+        durationRates[40] = 800;   // 40 days: 8% APY
+        durationRates[50] = 1000;  // 50 days (Jubilee cycle): 10% APY
+        durationRates[180] = 1200; // 180 days: 12% APY
+    }
+
+    function stake(uint256 amount, uint256 duration) external nonReentrant {
+        require(amount > 0, "Amount must be greater than 0");
+        require(durationRates[duration] > 0, "Invalid duration");
+        require(dominionCoin.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+
+        userStakes[msg.sender].push(Stake({
+            amount: amount,
+            duration: duration,
+            startTime: block.timestamp,
+            rewardRate: durationRates[duration],
+            withdrawn: false
+        }));
+
+        emit Staked(msg.sender, amount, duration);
+    }
+
+    function calculateRewards(Stake memory userStake) public view returns (uint256) {
+        uint256 timeStaked = userStake.duration * 1 days;
+        uint256 annualReward = (userStake.amount * userStake.rewardRate) / 10000;
+        return (annualReward * timeStaked) / 365 days;
+    }
+}

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(git --version)",
+      "Bash(docker:*)",
+      "Bash(expo --version)",
+      "Bash(nest --version)",
+      "Bash(tsc --version)",
+      "Bash(nx --version)",
+      "Bash(railway --version)",
+      "Bash(vercel:*)",
+      "Bash(npx expo:*)",
+      "Bash(findstr:*)",
+      "Bash(npm root:*)",
+      "Bash(npm bin:*)",
+      "Read(//c/Users/yahut/AppData/Roaming/npm/**)",
+      "Bash(\"C:\\Users\\yahut\\AppData\\Roaming\\npm\\expo-internal.cmd\" --version)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm config:*)",
+      "Bash(copy:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "moedim",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:mobile\"",
+    "dev:api": "cd apps/api && npm run start:dev",
+    "dev:mobile": "cd apps/mobile && npm start",
+
+    "build": "npm run build:api && npm run build:mobile",
+    "build:api": "cd apps/api && npm run build",
+    "build:mobile": "cd apps/mobile && npm run build",
+
+    "start": "npm run start:api",
+    "start:api": "cd apps/api && npm run start:prod",
+
+    "db:migrate": "cd apps/api && npx prisma migrate dev",
+    "db:migrate:deploy": "cd apps/api && npx prisma migrate deploy",
+    "db:generate": "cd apps/api && npx prisma generate",
+    "db:seed": "cd apps/api && npx prisma db seed",
+    "db:studio": "cd apps/api && npx prisma studio",
+
+    "contracts:compile": "cd contracts && npx hardhat compile",
+    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js",
+
+    "test": "npm run test:api && npm run test:mobile",
+    "test:api": "cd apps/api && npm test",
+    "test:mobile": "cd apps/mobile && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

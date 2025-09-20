@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  walletAddress   String?  @map("wallet_address")
+  hebrewLevel     Int      @default(0) @map("hebrew_level")
+  streakDays      Int      @default(0) @map("streak_days")
+  totalCoins      Decimal  @default(0) @map("total_coins") @db.Decimal(18, 8)
+  timezone        String   @default("UTC")
+  lastActiveAt    DateTime @default(now()) @map("last_active_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  studyProgress   UserStudyProgress[]
+  cardReviews     UserCardReview[]
+  circleMembers   CircleMembership[]
+  products        Product[]
+  transactions    Transaction[]
+  messages        Message[]
+
+  @@map("users")
+}
+
+model TorahPortion {
+  id            String   @id @default(cuid())
+  nameEnglish   String   @map("name_english")
+  nameHebrew    String   @map("name_hebrew")
+  parasha       String
+  startDate     DateTime @map("start_date")
+  content       Json
+  audioUrl      String?  @map("audio_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("torah_portions")
+}
+
+model UserStudyProgress {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  contentId    String    @map("content_id")
+  contentType  String    @map("content_type") // torah, hebrew_lesson, commandment
+  completedAt  DateTime  @map("completed_at")
+  score        Int?
+  coinsEarned  Decimal   @default(0) @map("coins_earned") @db.Decimal(18, 8)
+
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@map("user_study_progress")
+}
+
+model HebrewCard {
+  id               String   @id @default(cuid())
+  wordHebrew       String   @map("word_hebrew")
+  wordEnglish      String   @map("word_english")
+  transliteration  String
+  difficultyLevel  Int      @map("difficulty_level")
+  gematriaValue    Int?     @map("gematria_value")
+  category         String   @default("vocabulary")
+  audioUrl         String?  @map("audio_url")
+
+  reviews          UserCardReview[]
+
+  @@map("hebrew_cards")
+}
+
+model UserCardReview {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  cardId         String    @map("card_id")
+  easeFactor     Decimal   @default(2.5) @map("ease_factor") @db.Decimal(3, 2)
+  intervalDays   Int       @default(1) @map("interval_days")
+  repetitions    Int       @default(0)
+  nextReviewDate DateTime  @map("next_review_date")
+  lastReviewed   DateTime? @map("last_reviewed")
+
+  user           User      @relation(fields: [userId], references: [id])
+  card           HebrewCard @relation(fields: [cardId], references: [id])
+
+  @@map("user_card_reviews")
+}
+
+model HebrewDate {
+  id            String    @id @default(cuid())
+  hebrewDate    String    @map("hebrew_date")
+  gregorianDate DateTime  @map("gregorian_date")
+  isSabbath     Boolean   @default(false) @map("is_sabbath")
+  isFeast       Boolean   @default(false) @map("is_feast")
+  feastName     String?   @map("feast_name")
+  sunsetTime    DateTime? @map("sunset_time")
+
+  @@map("hebrew_dates")
+}
+
+model Circle {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  maxMembers  Int      @default(10) @map("max_members")
+  createdBy   String   @map("created_by")
+  coinPool    Decimal  @default(0) @map("coin_pool") @db.Decimal(18, 8)
+  isPrivate   Boolean  @default(false) @map("is_private")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  members     CircleMembership[]
+  messages    Message[]
+
+  @@map("circles")
+}
+
+model CircleMembership {
+  id       String @id @default(cuid())
+  circleId String @map("circle_id")
+  userId   String @map("user_id")
+  role     String @default("member") // admin, moderator, member
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  circle   Circle @relation(fields: [circleId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([circleId, userId])
+  @@map("circle_memberships")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  circleId  String   @map("circle_id")
+  userId    String   @map("user_id")
+  content   String
+  messageType String @default("text") @map("message_type") // text, image, audio
+  createdAt DateTime @default(now()) @map("created_at")
+
+  circle    Circle   @relation(fields: [circleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("messages")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sellerId    String   @map("seller_id")
+  title       String
+  description String
+  priceUsd    Decimal? @map("price_usd") @db.Decimal(10, 2)
+  priceCoin   Decimal? @map("price_coin") @db.Decimal(18, 8)
+  category    String
+  isDigital   Boolean  @default(false) @map("is_digital")
+  isActive    Boolean  @default(true) @map("is_active")
+  imageUrl    String?  @map("image_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  seller      User     @relation(fields: [sellerId], references: [id])
+
+  @@map("products")
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  transactionHash String?  @map("transaction_hash")
+  transactionType String   @map("transaction_type") // reward, purchase, transfer, stake
+  amount          Decimal  @db.Decimal(18, 8)
+  status          String   @default("pending") // pending, confirmed, failed
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
+
+model CommandmentTracker {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  commandmentType  String   @map("commandment_type")
+  completedAt      DateTime @map("completed_at")
+  notes            String?
+  streak           Int      @default(1)
+
+  @@map("commandment_tracker")
+}
