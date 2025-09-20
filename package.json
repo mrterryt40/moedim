@@ -15,6 +15,7 @@
     "build": "npm run build:api && npm run build:mobile",
     "build:api": "cd apps/api && npm run build",
     "build:mobile": "cd apps/mobile && npm run build",
+    "build:web": "cd apps/mobile && npm run build:web",
 
     "start": "npm run start:api",
     "start:api": "cd apps/api && npm run start:prod",

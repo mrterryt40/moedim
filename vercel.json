@@ -1,36 +1,11 @@
 {
   "version": 2,
   "name": "moedim",
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://api.moedim.app/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/$1"
-    }
-  ],
+  "buildCommand": "cd apps/mobile && npm run build:web",
+  "outputDirectory": "apps/mobile/dist",
+  "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://api.moedim.app",
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key"
-  },
-  "build": {
-    "env": {
-      "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
-    }
-  },
-  "functions": {
-    "apps/web/api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
+    "EXPO_PUBLIC_API_URL": "@railway_api_url"
   },
   "headers": [
     {
