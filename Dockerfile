@@ -19,6 +19,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy all source code
 COPY . .
 
+# Generate Prisma client
+RUN npm run -w apps/api db:generate
+
 # Build the API application via root workspace script
 RUN npm run build:api
 
