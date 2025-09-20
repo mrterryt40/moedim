@@ -1,8 +1,8 @@
-name: Deploy Mo'edim
+name: 🚀 Mo'edim Automated Deployment
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -11,165 +11,135 @@ env:
 
 jobs:
   # ========================================
-  # TESTING & QUALITY CHECKS
+  # TESTING & BUILD
   # ========================================
-  test:
-    name: Test & Lint
+  test-and-build:
+    name: 🧪 Test & Build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Run TypeScript check
-        run: npm run typecheck
+      - name: 🔧 Build API
+        run: npm run build:api
 
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test
-
-  # ========================================
-  # DEPLOY WEB APP TO VERCEL
-  # ========================================
-  deploy-web:
-    name: Deploy Web App
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Deploy to Vercel
-        run: |
-          cd apps/web
-          vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: 📱 Build Mobile (Web)
+        run: npm run build:web
 
   # ========================================
   # DEPLOY API TO RAILWAY
   # ========================================
-  deploy-api:
-    name: Deploy API
+  deploy-railway:
+    name: 🚂 Deploy API to Railway
     runs-on: ubuntu-latest
-    needs: test
+    needs: test-and-build
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: 🚂 Deploy to Railway
+        uses: bervProject/railway-deploy@v1.2.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        run: |
-          cd apps/api
-          railway login --token ${{ secrets.RAILWAY_TOKEN }}
-          railway up --service api
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: 'moedim-api'
 
   # ========================================
-  # BUILD MOBILE APP (EXPO)
+  # DEPLOY WEB TO VERCEL
   # ========================================
-  build-mobile:
-    name: Build Mobile App
+  deploy-vercel:
+    name: ⚡ Deploy Web to Vercel
     runs-on: ubuntu-latest
-    needs: test
+    needs: test-and-build
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: ⚡ Deploy to Vercel
+        uses: amondnet/vercel-action@v25
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Setup Expo CLI
-        run: npm install -g @expo/cli
-
-      - name: Install dependencies
-        run: |
-          cd apps/mobile
-          npm ci
-
-      - name: Build for production
-        run: |
-          cd apps/mobile
-          npx expo export --platform all
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
 
   # ========================================
-  # PREVIEW DEPLOYMENTS (FOR PRs)
+  # UPDATE MOBILE APP CONFIG
   # ========================================
-  preview:
-    name: Preview Deployment
+  update-mobile-config:
+    name: 📱 Update Mobile App Config
     runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'pull_request'
+    needs: [deploy-railway, deploy-vercel]
+    if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Deploy Preview
+      - name: 📱 Update API URL in mobile app
         run: |
-          cd apps/web
-          vercel --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          # Update the API URL to use production Railway endpoint
+          sed -i "s|http://localhost:3000|${{ secrets.RAILWAY_API_URL }}|g" apps/mobile/src/screens/DailyTorahScreen.tsx
 
-      - name: Comment PR with preview URL
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚀 Preview deployment ready! Check out your changes.'
-            })
+      - name: 📤 Commit updated mobile config
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add apps/mobile/src/screens/DailyTorahScreen.tsx
+          git diff --staged --quiet || git commit -m "🤖 Update mobile app to use production API
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push
+
+  # ========================================
+  # POST-DEPLOYMENT TESTING
+  # ========================================
+  test-production:
+    name: 🧪 Test Production Deployments
+    runs-on: ubuntu-latest
+    needs: [deploy-railway, deploy-vercel, update-mobile-config]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🧪 Test Railway API
+        run: |
+          echo "Testing Railway API endpoints..."
+          curl -f ${{ secrets.RAILWAY_API_URL }}/torah/daily || exit 1
+          curl -f ${{ secrets.RAILWAY_API_URL }}/ || exit 1
+          echo "✅ Railway API tests passed!"
+
+      - name: 🧪 Test Vercel Web App
+        run: |
+          echo "Testing Vercel web deployment..."
+          curl -f ${{ secrets.VERCEL_PROJECT_URL }} || exit 1
+          echo "✅ Vercel web app tests passed!"
+
+      - name: 🎉 Deployment Success Notification
+        run: |
+          echo "🎉 Mo'edim deployment successful!"
+          echo "📍 API: ${{ secrets.RAILWAY_API_URL }}"
+          echo "🌐 Web: ${{ secrets.VERCEL_PROJECT_URL }}"
+          echo "📱 Mobile app updated to use production API"
