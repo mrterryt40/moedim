@@ -17,8 +17,18 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
-COPY . .
+# Copy root package.json and package-lock.json first for workspace structure
+COPY package.json package-lock.json* ./
+
+# Copy workspace package.json files
+COPY apps/api/package.json ./apps/api/
+COPY apps/mobile/package.json ./apps/mobile/
+
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy all source code
+COPY . .
 
 # Build the API application
 RUN npm run build:api
