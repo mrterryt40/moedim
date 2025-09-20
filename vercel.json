@@ -1,12 +1,13 @@
 {
   "version": 2,
-  "name": "moedim",
+  "framework": null,
   "buildCommand": "cd apps/mobile && npm run build:web",
   "outputDirectory": "apps/mobile/dist",
   "installCommand": "npm install",
   "env": {
     "EXPO_PUBLIC_API_URL": "https://moedim-api-production.up.railway.app"
   },
+  "functions": {},
   "headers": [
     {
       "source": "/(.*)",
