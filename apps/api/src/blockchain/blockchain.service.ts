@@ -213,7 +213,7 @@ export class BlockchainService {
       const amountWei = ethers.parseEther(amount);
 
       // Execute transfer
-      const tx = await contractWithSigner.transfer(toAddress, amountWei);
+      const tx = await (contractWithSigner as any).transfer(toAddress, amountWei);
       const receipt = await tx.wait();
 
       // Update database balances
@@ -342,11 +342,11 @@ export class BlockchainService {
       const dominionWithSigner = this.dominionCoinContract.connect(wallet);
       const amountWei = ethers.parseEther(amount);
 
-      const approveTx = await dominionWithSigner.approve(this.stakingContract.target, amountWei);
+      const approveTx = await (dominionWithSigner as any).approve(this.stakingContract.target, amountWei);
       await approveTx.wait();
 
       // Execute staking
-      const stakeTx = await stakingWithSigner.stake(amountWei, duration);
+      const stakeTx = await (stakingWithSigner as any).stake(amountWei, duration);
       const receipt = await stakeTx.wait();
 
       const unlockDate = new Date();
@@ -426,7 +426,7 @@ export class BlockchainService {
       const rewards = await this.stakingContract.calculateReward(user.walletAddress);
 
       // Execute unstaking
-      const unstakeTx = await stakingWithSigner.unstake();
+      const unstakeTx = await (stakingWithSigner as any).unstake();
       const receipt = await unstakeTx.wait();
 
       const stakedAmount = parseFloat(ethers.formatEther(stakeInfo.amount));
@@ -514,7 +514,7 @@ export class BlockchainService {
         const contractWithSigner = this.dominionCoinContract.connect(adminWallet);
 
         const amountWei = ethers.parseEther(amount.toString());
-        const mintTx = await contractWithSigner.mint(user.walletAddress, amountWei);
+        const mintTx = await (contractWithSigner as any).mint(user.walletAddress, amountWei);
         await mintTx.wait();
 
         // Record mint transaction
@@ -556,7 +556,7 @@ export class BlockchainService {
     // In production, retrieve encrypted private key from secure storage
     const { encryptedKey, password } = await this.getStoredEncryptedKey(userId);
     const wallet = await ethers.Wallet.fromEncryptedJson(encryptedKey, password);
-    return wallet.connect(this.provider);
+    return (wallet as any).connect(this.provider);
   }
 
   private async getAdminWallet(): Promise<ethers.Wallet> {
