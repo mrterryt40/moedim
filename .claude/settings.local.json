@@ -20,7 +20,8 @@
       "Bash(npm config:*)",
       "Bash(copy:*)",
       "Bash(node:*)",
-      "Bash(npm:*)"
+      "Bash(npm:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []

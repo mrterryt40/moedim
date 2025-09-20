@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   # ========================================
@@ -28,7 +28,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: 🔧 Build API
         run: npm run build:api
