@@ -4,7 +4,7 @@ import { designTokens } from '../../theme/tokens';
 
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'torah' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'small' | 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
@@ -23,10 +23,12 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const normalizedSize = size === 'small' ? 'sm' : size;
+
   const buttonStyle = [
     styles.base,
     styles[variant],
-    styles[size],
+    styles[normalizedSize],
     disabled && styles.disabled,
     style
   ];
@@ -34,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
   const buttonTextStyle = [
     styles.baseText,
     styles[`${variant}Text`],
-    styles[`${size}Text`],
+    styles[`${normalizedSize}Text`],
     disabled && styles.disabledText,
     textStyle
   ];

@@ -27,12 +27,15 @@ export const designTokens = {
       creamLight: '#FEFDFB',
       creamDark: '#F1EDE3',
       white: '#FFFFFF',
+      gray50: '#F9FAFB',
       gray100: '#F7F7F7',
       gray200: '#E5E5E5',
       gray300: '#D1D1D1',
+      gray400: '#9CA3AF',
       gray500: '#6B7280',
       gray600: '#4B5563',
       gray700: '#374151',
+      gray800: '#1F2937',
       gray900: '#111827',
     },
 
@@ -74,10 +77,10 @@ export const designTokens = {
 
     // Font Weights
     fontWeight: {
-      normal: '400',
-      medium: '500',
-      semibold: '600',
-      bold: '700',
+      normal: '400' as const,
+      medium: '500' as const,
+      semibold: '600' as const,
+      bold: '700' as const,
     },
 
     // Line Heights
