@@ -1,8 +1,5 @@
-# Mo'edim Production Dockerfile
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+# Mo'edim Production Dockerfile - Pattern A (Monorepo at runtime)
+FROM node:20 AS deps
 WORKDIR /app
 
 # Copy all package files for monorepo workspace resolution
@@ -10,19 +7,11 @@ COPY package.json package-lock.json* ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/mobile/package.json ./apps/mobile/
 
-# Install all dependencies (including dev for build step)
+# Install all dependencies
 RUN npm ci
 
-# Rebuild the source code only when needed
-FROM base AS builder
+FROM node:20 AS build
 WORKDIR /app
-
-# Copy root package.json and package-lock.json first for workspace structure
-COPY package.json package-lock.json* ./
-
-# Copy workspace package.json files
-COPY apps/api/package.json ./apps/api/
-COPY apps/mobile/package.json ./apps/mobile/
 
 # Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -30,40 +19,30 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy all source code
 COPY . .
 
-# Build the API application
+# Build the API application via root workspace script
 RUN npm run build:api
 
-# Production dependencies only
-FROM base AS prod-deps
+FROM node:20 AS runner
 WORKDIR /app
 
-# Copy all package files for monorepo workspace resolution
+# Keep root workspace files AND folders at runtime
 COPY package.json package-lock.json* ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/mobile/package.json ./apps/mobile/
+COPY apps ./apps
+COPY packages ./packages
 
-# Install only production dependencies
-RUN npm ci --omit=dev
+# Copy built API dist to the correct location
+COPY --from=build /app/apps/api/dist ./apps/api/dist
 
-# Production image, copy all the files and run the app
-FROM base AS runner
-WORKDIR /app
+# Copy node_modules
+COPY --from=deps /app/node_modules ./node_modules
+
+# Quick assert to avoid silent misconfig
+RUN node -e "const p=require('./package.json'); if(!p.workspaces) { process.exit(1) }"
 
 ENV NODE_ENV=production
+# Railway expects your server to listen on PORT
+ENV PORT=8080
+EXPOSE 8080
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 moedim
-
-# Copy built application
-COPY --from=builder --chown=moedim:nodejs /app/apps/api/dist ./dist
-COPY --from=prod-deps --chown=moedim:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=moedim:nodejs /app/apps/api/package.json ./package.json
-
-USER moedim
-
-EXPOSE 3001
-
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "dist/main.js"]
+# ✅ Start via root wrapper (no trailing flags)
+CMD ["npm","run","start:api"]
