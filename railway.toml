@@ -9,6 +9,6 @@ restartPolicyMaxRetries = 10
 
 [environments.production.variables]
 NODE_ENV = "production"
-PORT = "3000"
 JWT_SECRET = "moedim-super-secret-jwt-key-production-5785"
 CORS_ORIGIN = "*"
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
