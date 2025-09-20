@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, QueryMode } from '@prisma/client';
 import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
@@ -70,9 +70,9 @@ export class TorahService {
     // Enhanced search with content search
     const whereClause = {
       OR: [
-        { nameEnglish: { contains: query, mode: 'insensitive' } },
+        { nameEnglish: { contains: query, mode: QueryMode.insensitive } },
         { nameHebrew: { contains: query } },
-        { parasha: { contains: query, mode: 'insensitive' } }
+        { parasha: { contains: query, mode: QueryMode.insensitive } }
       ]
     };
 
@@ -178,6 +178,10 @@ export class TorahService {
       select: { streakDays: true }
     });
 
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     return {
       totalPortionsRead,
       readToday,
@@ -217,6 +221,10 @@ export class TorahService {
       where: { id: userId },
       select: { streakDays: true }
     });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     let newStreak = user.streakDays;
 

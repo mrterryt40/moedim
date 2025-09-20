@@ -605,8 +605,8 @@ export class MarketplaceService {
       this.prisma.product.count({ where: { status: 'active' } }),
       this.prisma.product.groupBy({
         by: ['category'],
-        _count: { _all: true },
-        orderBy: { _count: { _all: 'desc' } },
+        _count: { category: true },
+        orderBy: { _count: { category: 'desc' } },
         take: 5
       })
     ]);
@@ -619,7 +619,7 @@ export class MarketplaceService {
       activeProducts,
       topCategories: topCategories.map(cat => ({
         category: cat.category,
-        count: cat._count._all
+        count: cat._count.category
       }))
     };
   }
