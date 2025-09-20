@@ -9,29 +9,29 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:mobile\"",
-    "dev:api": "cd apps/api && npm run start:dev",
-    "dev:mobile": "cd apps/mobile && npm start",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:mobile": "npm start --workspace=apps/mobile",
 
     "build": "npm run build:api && npm run build:mobile",
-    "build:api": "cd apps/api && npm run build",
-    "build:mobile": "cd apps/mobile && npm run build",
-    "build:web": "cd apps/mobile && npm run build:web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:mobile": "npm run build --workspace=apps/mobile",
+    "build:web": "npm run build:web --workspace=apps/mobile",
 
     "start": "npm run start:api",
-    "start:api": "cd apps/api && npm run start:prod",
+    "start:api": "npm run start:prod --workspace=apps/api",
 
-    "db:migrate": "cd apps/api && npx prisma migrate dev",
-    "db:migrate:deploy": "cd apps/api && npx prisma migrate deploy",
-    "db:generate": "cd apps/api && npx prisma generate",
-    "db:seed": "cd apps/api && npx prisma db seed",
-    "db:studio": "cd apps/api && npx prisma studio",
+    "db:migrate": "npx prisma migrate dev --workspace=apps/api",
+    "db:migrate:deploy": "npx prisma migrate deploy --workspace=apps/api",
+    "db:generate": "npx prisma generate --workspace=apps/api",
+    "db:seed": "npx prisma db seed --workspace=apps/api",
+    "db:studio": "npx prisma studio --workspace=apps/api",
 
-    "contracts:compile": "cd contracts && npx hardhat compile",
-    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js",
+    "contracts:compile": "npx hardhat compile --workspace=contracts",
+    "contracts:deploy": "npx hardhat run scripts/deploy.js --workspace=contracts",
 
     "test": "npm run test:api && npm run test:mobile",
-    "test:api": "cd apps/api && npm test",
-    "test:mobile": "cd apps/mobile && npm test"
+    "test:api": "npm test --workspace=apps/api",
+    "test:mobile": "npm test --workspace=apps/mobile"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
