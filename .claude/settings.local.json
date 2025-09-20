@@ -21,7 +21,8 @@
       "Bash(copy:*)",
       "Bash(node:*)",
       "Bash(npm:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
