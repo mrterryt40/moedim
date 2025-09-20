@@ -60,10 +60,10 @@ export class HebrewService {
       wordEnglish: review.card.wordEnglish,
       transliteration: review.card.transliteration,
       difficultyLevel: review.card.difficultyLevel,
-      gematriaValue: review.card.gematriaValue,
+      gematriaValue: review.card.gematriaValue ?? undefined,
       category: review.card.category,
-      audioUrl: review.card.audioUrl,
-      lastReviewed: review.lastReviewed,
+      audioUrl: review.card.audioUrl ?? undefined,
+      lastReviewed: review.lastReviewed ?? undefined,
       easeFactor: Number(review.easeFactor),
       intervalDays: review.intervalDays,
       repetitions: review.repetitions
@@ -92,6 +92,9 @@ export class HebrewService {
 
     // Calculate coins earned based on quality and difficulty
     const card = await this.prisma.hebrewCard.findUnique({ where: { id: cardId } });
+    if (!card) {
+      throw new Error('Card not found');
+    }
     const coinsEarned = this.calculateCoinsEarned(quality, card.difficultyLevel);
 
     // Update or create review record
@@ -196,9 +199,9 @@ export class HebrewService {
       wordEnglish: card.wordEnglish,
       transliteration: card.transliteration,
       difficultyLevel: card.difficultyLevel,
-      gematriaValue: card.gematriaValue,
+      gematriaValue: card.gematriaValue ?? undefined,
       category: card.category,
-      audioUrl: card.audioUrl,
+      audioUrl: card.audioUrl ?? undefined,
       easeFactor: 2.5,
       intervalDays: 1,
       repetitions: 0
@@ -233,6 +236,10 @@ export class HebrewService {
       where: { id: userId },
       select: { streakDays: true, hebrewLevel: true }
     });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     return {
       totalCards,
@@ -357,6 +364,10 @@ export class HebrewService {
       where: { id: userId },
       select: { streakDays: true }
     });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     let newStreak = user.streakDays;
 

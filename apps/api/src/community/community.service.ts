@@ -84,7 +84,7 @@ export class CommunityService {
       circles.push({
         id: circle.id,
         name: circle.name,
-        description: circle.description,
+        description: circle.description || undefined,
         maxMembers: circle.maxMembers,
         isPrivate: circle.isPrivate,
         createdAt: circle.createdAt,
