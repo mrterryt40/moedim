@@ -7,7 +7,6 @@
   "env": {
     "EXPO_PUBLIC_API_URL": "https://moedim-api-production.up.railway.app"
   },
-  "functions": {},
   "headers": [
     {
       "source": "/(.*)",
