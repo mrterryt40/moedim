@@ -28,7 +28,7 @@ WORKDIR /app
 # Keep root workspace files AND folders at runtime
 COPY package.json package-lock.json* ./
 COPY apps ./apps
-COPY packages ./packages
+COPY contracts ./contracts
 
 # Copy built API dist to the correct location
 COPY --from=build /app/apps/api/dist ./apps/api/dist
