@@ -37,8 +37,11 @@ COPY contracts ./contracts
 # Copy built API dist to the correct location
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
-# Copy node_modules
+# Copy node_modules from deps stage first
 COPY --from=deps /app/node_modules ./node_modules
+
+# ✅ Copy the generated Prisma client from build stage to override deps version
+COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Quick assert to avoid silent misconfig
 RUN node -e "const p=require('./package.json'); if(!p.workspaces) { process.exit(1) }"
