@@ -64,8 +64,8 @@ export const DailyTorahScreen: React.FC = () => {
 
       // Fetch Torah portion and user progress in parallel
       const [portionResponse, progressResponse] = await Promise.all([
-        fetch('http://localhost:3000/torah/daily'),
-        fetch('http://localhost:3000/users/progress') // This would need authentication
+        fetch('/torah/daily'),
+        fetch('/users/progress') // This would need authentication
       ]);
 
       const portionData = await portionResponse.json();
@@ -94,7 +94,7 @@ export const DailyTorahScreen: React.FC = () => {
   const markAsComplete = async () => {
     try {
       // Call API to mark as complete and award coins
-      const response = await fetch('http://localhost:3000/torah/complete', {
+      const response = await fetch('/torah/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ portionId: portion?.id })
