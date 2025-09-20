@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mo'edim - Israelite Life & Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colors */
+            --primary-indigo: #4f46e5;
+            --primary-indigo-dark: #3730a3;
+            --secondary-gold: #f59e0b;
+            --accent-emerald: #10b981;
+            --accent-crimson: #dc2626;
+            --neutral-white: #ffffff;
+            --neutral-gray50: #f9fafb;
+            --neutral-gray100: #f3f4f6;
+            --neutral-gray200: #e5e7eb;
+            --neutral-gray300: #d1d5db;
+            --neutral-gray400: #9ca3af;
+            --neutral-gray500: #6b7280;
+            --neutral-gray600: #4b5563;
+            --neutral-gray700: #374151;
+            --neutral-gray800: #1f2937;
+            --neutral-gray900: #111827;
+
+            /* Typography */
+            --font-primary: 'Inter', sans-serif;
+            --font-hebrew: 'David Libre', serif;
+
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+
+            /* Border radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--neutral-gray50);
+            color: var(--neutral-gray800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-md);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--primary-indigo-dark) 100%);
+            color: var(--neutral-white);
+            padding: var(--spacing-lg) 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+            font-family: var(--font-hebrew);
+        }
+
+        .nav {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            color: var(--neutral-white);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .nav-item:hover {
+            color: var(--secondary-gold);
+        }
+
+        /* Main Content */
+        .main {
+            padding: var(--spacing-2xl) 0;
+        }
+
+        .grid {
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        /* Cards */
+        .card {
+            background: var(--neutral-white);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--neutral-gray200);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--neutral-gray800);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .card-subtitle {
+            color: var(--neutral-gray600);
+            font-size: 0.875rem;
+        }
+
+        /* Welcome Section */
+        .welcome {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-indigo);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-hebrew);
+        }
+
+        .welcome-subtitle {
+            font-size: 1.125rem;
+            color: var(--neutral-gray600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Hebrew Text */
+        .hebrew {
+            font-family: var(--font-hebrew);
+            direction: rtl;
+            color: var(--secondary-gold);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-indigo);
+            color: var(--neutral-white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-indigo-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-gold);
+            color: var(--neutral-white);
+        }
+
+        .btn-secondary:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        /* Progress Bar */
+        .progress {
+            background: var(--neutral-gray200);
+            border-radius: var(--radius-sm);
+            height: 8px;
+            overflow: hidden;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .progress-fill {
+            background: var(--primary-indigo);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Community Items */
+        .community-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--neutral-gray100);
+        }
+
+        .community-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Featured Items */
+        .featured-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--neutral-gray100);
+        }
+
+        .featured-item:last-child {
+            border-bottom: none;
+        }
+
+        .featured-price {
+            font-weight: 600;
+            color: var(--primary-indigo);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .nav {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hebrew Date Display */
+        .hebrew-date {
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-align: center;
+            margin: var(--spacing-sm) 0;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: var(--accent-emerald);
+            color: var(--neutral-white);
+        }
+
+        .badge-warning {
+            background: var(--secondary-gold);
+            color: var(--neutral-white);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🕊️</span>
+                    <span class="logo-text">Mo'edim</span>
+                </div>
+                <nav class="nav">
+                    <a href="#" class="nav-item">🏠 Dashboard</a>
+                    <a href="#" class="nav-item">📅 Calendar | לוח שנה</a>
+                    <a href="#" class="nav-item">📚 Hebrew | עברית</a>
+                    <a href="#" class="nav-item">🛒 Marketplace | שוק</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Welcome Section -->
+            <section class="welcome">
+                <h1 class="welcome-title">
+                    שלום! Welcome to Mo'edim
+                </h1>
+                <p class="welcome-subtitle">
+                    Your comprehensive platform for Israelite life, learning, and community
+                </p>
+            </section>
+
+            <!-- Main Grid -->
+            <div class="grid grid-2">
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <a href="#" class="btn btn-primary">📚 Study Hebrew</a>
+                        <a href="#" class="btn btn-secondary">📅 View Calendar</a>
+                        <a href="#" class="btn btn-primary">🛒 Browse Marketplace</a>
+                        <a href="#" class="btn btn-secondary">👥 Join Community</a>
+                    </div>
+                </div>
+
+                <!-- Today's Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Today's Information</h2>
+                    </div>
+
+                    <div style="margin-bottom: var(--spacing-lg);">
+                        <h3 style="color: var(--neutral-gray700); margin-bottom: var(--spacing-sm);">Hebrew Date</h3>
+                        <div class="hebrew-date hebrew">כ״ג תשרי ה׳תשפ״ה</div>
+                    </div>
+
+                    <div style="margin-bottom: var(--spacing-lg);">
+                        <h3 style="color: var(--neutral-gray700); margin-bottom: var(--spacing-sm);">Today's Feast</h3>
+                        <p style="font-size: 1.125rem; color: var(--neutral-gray800);">
+                            <span class="badge badge-success">🎉 Active</span>
+                            Simchat Torah Celebration
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--neutral-gray700); margin-bottom: var(--spacing-sm);">Hebrew Learning Progress</h3>
+                        <div class="progress">
+                            <div class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--neutral-gray600);">
+                            65% complete - 23 words learned this week
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Row -->
+            <div class="grid grid-3" style="margin-top: var(--spacing-xl);">
+                <!-- Community Highlights -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Community Highlights</h2>
+                    </div>
+
+                    <div class="community-item">
+                        <span>🔥</span>
+                        <span>5 new Torah discussions active</span>
+                    </div>
+
+                    <div class="community-item">
+                        <span>📖</span>
+                        <span>Weekly Parsha study group: Thursday 7 PM</span>
+                    </div>
+
+                    <div class="community-item">
+                        <span>🏪</span>
+                        <span>12 new marketplace items from local artisans</span>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md);">
+                        <a href="#" class="btn btn-primary">Join Discussions</a>
+                    </div>
+                </div>
+
+                <!-- Featured Marketplace -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Featured Marketplace</h2>
+                    </div>
+
+                    <div class="featured-item">
+                        <div>
+                            <div style="font-weight: 500;">🕯️ Handcrafted Sabbath Candles</div>
+                            <div style="font-size: 0.875rem; color: var(--neutral-gray600);">Premium beeswax</div>
+                        </div>
+                        <div class="featured-price">$45.00</div>
+                    </div>
+
+                    <div class="featured-item">
+                        <div>
+                            <div style="font-weight: 500;">📖 Hebrew Learning Flashcards</div>
+                            <div style="font-size: 0.875rem; color: var(--neutral-gray600);">500 essential words</div>
+                        </div>
+                        <div class="featured-price">$25.00</div>
+                    </div>
+
+                    <div class="featured-item">
+                        <div>
+                            <div style="font-weight: 500;">🍷 Kosher Wine Set</div>
+                            <div style="font-size: 0.875rem; color: var(--neutral-gray600);">3 bottles collection</div>
+                        </div>
+                        <div class="featured-price">$89.00</div>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md);">
+                        <a href="#" class="btn btn-secondary">View All Products</a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Activity</h2>
+                    </div>
+
+                    <div class="community-item">
+                        <span>📚</span>
+                        <span>Completed lesson: Hebrew Numbers</span>
+                        <span class="badge badge-success">✓</span>
+                    </div>
+
+                    <div class="community-item">
+                        <span>💬</span>
+                        <span>Joined Torah discussion on Shabbat</span>
+                        <span class="badge badge-warning">New</span>
+                    </div>
+
+                    <div class="community-item">
+                        <span>🛒</span>
+                        <span>Added items to marketplace wishlist</span>
+                    </div>
+
+                    <div class="community-item">
+                        <span>📅</span>
+                        <span>Subscribed to feast notifications</span>
+                        <span class="badge badge-success">✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bar
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                setTimeout(() => {
+                    progressFill.style.width = '65%';
+                }, 500);
+            }
+
+            // Add click handlers for navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.textContent.trim();
+                    alert(`Navigation to ${section} - This would load the respective section in a full implementation`);
+                });
+            });
+
+            // Add click handlers for buttons
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                        const action = this.textContent.trim();
+                        alert(`Action: ${action} - This would perform the action in a full implementation`);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

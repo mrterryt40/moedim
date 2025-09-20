@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mo'edim Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .welcome-section {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 24px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4f46e5;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-button {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            text-align: center;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary-button {
+            background: #4f46e5;
+        }
+
+        .secondary-button {
+            background: #f59e0b;
+        }
+
+        .full-width-button {
+            grid-column: 1 / -1;
+            margin-top: 12px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .hebrew-date {
+            font-size: 24px;
+            font-weight: 500;
+            color: #f59e0b;
+            text-align: center;
+            direction: rtl;
+        }
+
+        .feast-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .active-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .feast-name {
+            font-size: 16px;
+            color: #1f2937;
+        }
+
+        .progress-container {
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4f46e5;
+            width: 65%;
+            transition: width 1s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .community-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .community-item:last-child {
+            border-bottom: none;
+        }
+
+        .community-text {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .featured-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .featured-item:last-child {
+            border-bottom: none;
+        }
+
+        .featured-info {
+            flex: 1;
+        }
+
+        .featured-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .featured-description {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .featured-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        @media (max-width: 480px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">🕊️ Mo'edim</div>
+            <div class="header-subtitle">Israelite Life & Learning</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <div class="welcome-title">שלום! Welcome to Mo'edim</div>
+                <div class="welcome-subtitle">
+                    Your comprehensive platform for Israelite life, learning, and community
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-title">Quick Actions</div>
+                <div class="action-grid">
+                    <button class="action-button primary-button">📚 Study Hebrew</button>
+                    <button class="action-button secondary-button">📅 View Calendar</button>
+                    <button class="action-button primary-button">🛒 Browse Marketplace</button>
+                    <button class="action-button secondary-button">👥 Join Community</button>
+                </div>
+            </div>
+
+            <!-- Today's Information -->
+            <div class="card">
+                <div class="card-title">Today's Information</div>
+
+                <div class="info-section">
+                    <div class="info-label">Hebrew Date</div>
+                    <div class="hebrew-date">כ״ג תשרי ה׳תשפ״ה</div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-label">Today's Feast</div>
+                    <div class="feast-info">
+                        <div class="active-badge">🎉 Active</div>
+                        <div class="feast-name">Simchat Torah Celebration</div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-label">Hebrew Learning Progress</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">65% complete - 23 words learned this week</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community Highlights -->
+            <div class="card">
+                <div class="card-title">Community Highlights</div>
+
+                <div class="community-item">
+                    <div class="community-text">🔥 5 new Torah discussions active</div>
+                </div>
+
+                <div class="community-item">
+                    <div class="community-text">📖 Weekly Parsha study group: Thursday 7 PM</div>
+                </div>
+
+                <div class="community-item">
+                    <div class="community-text">🏪 12 new marketplace items from local artisans</div>
+                </div>
+
+                <button class="action-button primary-button full-width-button">Join Discussions</button>
+            </div>
+
+            <!-- Featured Marketplace -->
+            <div class="card">
+                <div class="card-title">Featured Marketplace</div>
+
+                <div class="featured-item">
+                    <div class="featured-info">
+                        <div class="featured-title">🕯️ Handcrafted Sabbath Candles</div>
+                        <div class="featured-description">Premium beeswax</div>
+                    </div>
+                    <div class="featured-price">$45.00</div>
+                </div>
+
+                <div class="featured-item">
+                    <div class="featured-info">
+                        <div class="featured-title">📖 Hebrew Learning Flashcards</div>
+                        <div class="featured-description">500 essential words</div>
+                    </div>
+                    <div class="featured-price">$25.00</div>
+                </div>
+
+                <div class="featured-item">
+                    <div class="featured-info">
+                        <div class="featured-title">🍷 Kosher Wine Set</div>
+                        <div class="featured-description">3 bottles collection</div>
+                    </div>
+                    <div class="featured-price">$89.00</div>
+                </div>
+
+                <button class="action-button secondary-button full-width-button">View All Products</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add click handlers
+        document.querySelectorAll('.action-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.textContent.trim();
+                alert(`Action: ${action}\n\nThis would navigate to the respective section in a full implementation.`);
+            });
+        });
+
+        // Animate progress bar on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '65%';
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
