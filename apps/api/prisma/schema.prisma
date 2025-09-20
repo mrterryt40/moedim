@@ -164,7 +164,14 @@ model Product {
   averageRating  Decimal? @default(0) @map("average_rating") @db.Decimal(3, 2) // Product rating 0.00-5.00
   priceUsd       Decimal? @map("price_usd") @db.Decimal(10, 2)
   priceCoin      Decimal? @map("price_coin") @db.Decimal(18, 8)
+  price          Decimal? @db.Decimal(10, 2) // Legacy price field for marketplace compatibility
+  coinPrice      Decimal? @map("coin_price") @db.Decimal(18, 8) // Legacy coin price field for marketplace compatibility
+  inventory      Int?     @default(0) // Stock quantity
+  shippingRequired Boolean @default(false) @map("shipping_required") // Whether product requires shipping
+  shippingCost   Decimal? @default(0) @map("shipping_cost") @db.Decimal(10, 2) // Shipping cost in USD
   category       String
+  subcategory    String?
+  tags           String[]  @default([])
   status         String   @default("active") // active, inactive, pending, sold
   isDigital      Boolean  @default(false) @map("is_digital")
   isActive       Boolean  @default(true) @map("is_active")

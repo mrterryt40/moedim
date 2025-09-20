@@ -43,9 +43,7 @@ interface CreateOrderDto {
 interface CreateReviewDto {
   productId: string;
   rating: number;
-  title?: string;
   content: string;
-  images?: string[];
 }
 
 @Injectable()
@@ -96,13 +94,14 @@ export class MarketplaceService {
 
     const product = await this.prisma.product.create({
       data: {
+        title: name.trim(),
         name: name.trim(),
         description: description.trim(),
         category,
         subcategory,
         price,
         coinPrice,
-        images,
+        images: JSON.stringify(images),
         tags,
         isDigital,
         digitalContent: digitalContent ? JSON.stringify(digitalContent) : null,
@@ -275,7 +274,7 @@ export class MarketplaceService {
     if (userId) {
       const purchase = await this.prisma.order.findFirst({
         where: {
-          userId,
+          buyerId: userId,
           productId,
           status: 'completed'
         }
@@ -310,7 +309,7 @@ export class MarketplaceService {
       throw new BadRequestException('Product is not available for purchase');
     }
 
-    if (!product.isDigital && product.inventory < quantity) {
+    if (!product.isDigital && (product.inventory || 0) < quantity) {
       throw new BadRequestException('Insufficient inventory');
     }
 
@@ -319,11 +318,11 @@ export class MarketplaceService {
     }
 
     // Calculate total cost
-    let totalPrice = product.price * quantity;
-    let totalCoinPrice = (product.coinPrice || 0) * quantity;
+    let totalPrice = Number(product.price || 0) * quantity;
+    let totalCoinPrice = Number(product.coinPrice || 0) * quantity;
 
     if (product.shippingRequired && shippingAddress) {
-      totalPrice += product.shippingCost || 0;
+      totalPrice += Number(product.shippingCost || 0);
     }
 
     // Process payment based on method
@@ -360,15 +359,11 @@ export class MarketplaceService {
     // Create order
     const order = await this.prisma.order.create({
       data: {
-        userId,
-        productId,
+        buyerId: userId,
         sellerId: product.sellerId,
-        quantity,
-        totalPrice,
-        totalCoinPrice,
-        paymentMethod,
-        paymentStatus,
-        transactionId,
+        productId,
+        totalAmount: totalPrice,
+        paymentType: paymentMethod === 'coins' ? 'coin' : 'usd',
         shippingAddress: shippingAddress ? JSON.stringify(shippingAddress) : null,
         status: paymentStatus === 'completed' ? 'processing' : 'pending'
       }
@@ -379,8 +374,7 @@ export class MarketplaceService {
       await this.prisma.product.update({
         where: { id: productId },
         data: {
-          inventory: { decrement: quantity },
-          totalSales: { increment: quantity }
+          inventory: { decrement: quantity }
         }
       });
     }
@@ -408,7 +402,7 @@ export class MarketplaceService {
 
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
-        where: { userId },
+        where: { buyerId: userId },
         include: {
           product: {
             select: {
@@ -430,7 +424,7 @@ export class MarketplaceService {
         skip: offset,
         take: limit
       }),
-      this.prisma.order.count({ where: { userId } })
+      this.prisma.order.count({ where: { buyerId: userId } })
     ]);
 
     return {
@@ -465,7 +459,7 @@ export class MarketplaceService {
               images: true
             }
           },
-          user: {
+          buyer: {
             select: {
               id: true,
               username: true
@@ -519,12 +513,12 @@ export class MarketplaceService {
 
   // Review System
   async createReview(userId: string, reviewData: CreateReviewDto) {
-    const { productId, rating, title, content, images = [] } = reviewData;
+    const { productId, rating, content } = reviewData;
 
     // Check if user has purchased the product
     const purchase = await this.prisma.order.findFirst({
       where: {
-        userId,
+        buyerId: userId,
         productId,
         status: 'completed'
       }
@@ -554,9 +548,7 @@ export class MarketplaceService {
         userId,
         productId,
         rating,
-        title,
-        content,
-        images
+        comment: content
       }
     });
 
@@ -646,7 +638,7 @@ export class MarketplaceService {
         where: { sellerId },
         include: {
           product: { select: { name: true } },
-          user: { select: { username: true } }
+          buyer: { select: { username: true } }
         },
         orderBy: { createdAt: 'desc' },
         take: 5
