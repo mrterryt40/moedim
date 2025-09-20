@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient, QueryMode } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
@@ -70,9 +70,9 @@ export class TorahService {
     // Enhanced search with content search
     const whereClause = {
       OR: [
-        { nameEnglish: { contains: query, mode: QueryMode.insensitive } },
+        { nameEnglish: { contains: query, mode: Prisma.QueryMode.insensitive } },
         { nameHebrew: { contains: query } },
-        { parasha: { contains: query, mode: QueryMode.insensitive } }
+        { parasha: { contains: query, mode: Prisma.QueryMode.insensitive } }
       ]
     };
 

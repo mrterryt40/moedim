@@ -16,6 +16,8 @@ model User {
   streakDays      Int      @default(0) @map("streak_days")
   totalCoins      Decimal  @default(0) @map("total_coins") @db.Decimal(18, 8)
   timezone        String   @default("UTC")
+  isVerified      Boolean  @default(false) @map("is_verified") // Marketplace verification status
+  merchantStatus  String   @default("none") @map("merchant_status") // none, pending, verified, suspended
   lastActiveAt    DateTime @default(now()) @map("last_active_at")
   createdAt       DateTime @default(now()) @map("created_at")
 
@@ -29,6 +31,7 @@ model User {
   ordersBuying    Order[] @relation("OrderBuyer")
   ordersSelling   Order[] @relation("OrderSeller")
   wishlists       Wishlist[]
+  reviews         Review[]
 
   @@map("users")
 }
@@ -150,22 +153,28 @@ model Message {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  sellerId    String   @map("seller_id")
-  title       String
-  description String
-  priceUsd    Decimal? @map("price_usd") @db.Decimal(10, 2)
-  priceCoin   Decimal? @map("price_coin") @db.Decimal(18, 8)
-  category    String
-  status      String   @default("active") // active, inactive, pending, sold
-  isDigital   Boolean  @default(false) @map("is_digital")
-  isActive    Boolean  @default(true) @map("is_active")
-  imageUrl    String?  @map("image_url")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  sellerId       String   @map("seller_id")
+  title          String
+  name           String   @default("") // Legacy field for marketplace compatibility
+  description    String
+  specifications String?  // JSON string for product specifications
+  digitalContent String?  @map("digital_content") // JSON string for digital product content
+  images         String?  // JSON string for product images array
+  averageRating  Decimal? @default(0) @map("average_rating") @db.Decimal(3, 2) // Product rating 0.00-5.00
+  priceUsd       Decimal? @map("price_usd") @db.Decimal(10, 2)
+  priceCoin      Decimal? @map("price_coin") @db.Decimal(18, 8)
+  category       String
+  status         String   @default("active") // active, inactive, pending, sold
+  isDigital      Boolean  @default(false) @map("is_digital")
+  isActive       Boolean  @default(true) @map("is_active")
+  imageUrl       String?  @map("image_url")
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  seller      User     @relation(fields: [sellerId], references: [id])
+  seller      User       @relation(fields: [sellerId], references: [id])
   orders      Order[]
   wishlists   Wishlist[]
+  reviews     Review[]
 
   @@map("products")
 }
@@ -197,17 +206,21 @@ model CommandmentTracker {
 }
 
 model Order {
-  id           String   @id @default(cuid())
-  buyerId      String   @map("buyer_id")
-  sellerId     String   @map("seller_id")
-  productId    String   @map("product_id")
-  status       String   @default("pending") // pending, confirmed, shipped, delivered, cancelled
-  totalAmount  Decimal  @db.Decimal(18, 8) @map("total_amount")
-  paymentType  String   @map("payment_type") // usd, coin
-  orderDate    DateTime @default(now()) @map("order_date")
-  deliveryDate DateTime? @map("delivery_date")
-  notes        String?
-  metadata     Json?
+  id               String   @id @default(cuid())
+  buyerId          String   @map("buyer_id")
+  sellerId         String   @map("seller_id")
+  productId        String   @map("product_id")
+  status           String   @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  totalAmount      Decimal  @db.Decimal(18, 8) @map("total_amount")
+  totalPrice       Decimal? @db.Decimal(18, 8) @map("total_price") // Legacy field for marketplace compatibility
+  totalCoinPrice   Decimal? @db.Decimal(18, 8) @map("total_coin_price") // Legacy field for marketplace compatibility
+  paymentType      String   @map("payment_type") // usd, coin
+  orderDate        DateTime @default(now()) @map("order_date")
+  createdAt        DateTime @default(now()) @map("created_at") // Standard created_at field
+  deliveryDate     DateTime? @map("delivery_date")
+  shippingAddress  String?  @map("shipping_address") // JSON string for shipping address
+  notes            String?
+  metadata         Json?
 
   buyer        User     @relation("OrderBuyer", fields: [buyerId], references: [id])
   seller       User     @relation("OrderSeller", fields: [sellerId], references: [id])
@@ -227,4 +240,19 @@ model Wishlist {
 
   @@unique([userId, productId])
   @@map("wishlists")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  productId  String   @map("product_id")
+  rating     Int      // 1-5 star rating
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
 }

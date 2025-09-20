@@ -19,8 +19,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy all source code
 COPY . .
 
-# Generate Prisma client
-RUN npm run db:generate
+# ✅ Ensure Prisma client exists for the TypeScript compiler
+ENV DATABASE_URL="file:./dev.db"
+RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Build the API application via root workspace script
 RUN npm run build:api
