@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+  actions: read
+
 env:
   NODE_VERSION: '20'
 
@@ -91,6 +95,9 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -108,11 +115,12 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull origin main
           git add apps/mobile/src/screens/DailyTorahScreen.tsx
           git diff --staged --quiet || git commit -m "🤖 Update mobile app to use production API
 
           Co-Authored-By: Claude <noreply@anthropic.com>"
-          git push
+          git push origin main
 
   # ========================================
   # POST-DEPLOYMENT TESTING
