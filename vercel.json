@@ -5,7 +5,7 @@
   "outputDirectory": "apps/mobile/dist",
   "installCommand": "npm install",
   "env": {
-    "EXPO_PUBLIC_API_URL": "@railway_api_url"
+    "EXPO_PUBLIC_API_URL": "https://moedim-api-production.up.railway.app"
   },
   "headers": [
     {

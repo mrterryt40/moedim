@@ -49,11 +49,13 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: 🚂 Deploy to Railway
-        uses: bervProject/railway-deploy@v1.2.0
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: 'moedim-api'
+        run: railway up --service moedim-api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   # ========================================
   # DEPLOY WEB TO VERCEL
