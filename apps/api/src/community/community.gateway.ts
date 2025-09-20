@@ -56,10 +56,10 @@ export class CommunityGateway implements OnGatewayConnection, OnGatewayDisconnec
       client.userId = payload.sub;
       client.username = payload.username;
 
-      this.userSockets.set(client.userId, client);
+      this.userSockets.set(client.userId!, client);
 
       // Join user to their circle rooms
-      const userCircles = await this.communityService.getUserCircles(client.userId);
+      const userCircles = await this.communityService.getUserCircles(client.userId!);
       for (const circle of userCircles) {
         client.join(`circle:${circle.id}`);
       }

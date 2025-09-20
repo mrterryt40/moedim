@@ -341,7 +341,7 @@ export class MarketplaceService {
 
       // Check user's coin balance
       const userWallet = await this.blockchainService.getBalance(userId);
-      if (userWallet.balance < totalCoinPrice) {
+      if (parseFloat(userWallet.balance) < totalCoinPrice) {
         throw new BadRequestException('Insufficient coin balance');
       }
 

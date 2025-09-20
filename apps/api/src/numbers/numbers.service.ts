@@ -232,7 +232,7 @@ export class NumbersService {
 
   findNumberPatterns(text: string): Array<{ pattern: string; significance: string; examples: string[] }> {
     const gematria = this.calculateGematria(text);
-    const patterns = [];
+    const patterns: any[] = [];
 
     // Check for common significant numbers
     const significantNumbers = [7, 12, 40, 70, 120, 144, 153, 666, 777, 888];
@@ -279,7 +279,7 @@ export class NumbersService {
 
     // Full gematria includes expanded letter names
     let fullValue = 0;
-    const letterMeanings = [];
+    const letterMeanings: any[] = [];
 
     for (const letter of hebrewWord) {
       const value = this.hebrewLetterValues[letter] || 0;

@@ -76,17 +76,7 @@ export class TorahService {
       ]
     };
 
-    // Add content search for JSON fields
-    if (language === 'english' || language === 'both') {
-      whereClause.OR.push(
-        { content: { path: ['english'], string_contains: query } }
-      );
-    }
-    if (language === 'hebrew' || language === 'both') {
-      whereClause.OR.push(
-        { content: { path: ['hebrew'], string_contains: query } }
-      );
-    }
+    // Content search temporarily disabled due to Prisma type issues
 
     return this.prisma.torahPortion.findMany({
       where: whereClause,

@@ -4,14 +4,14 @@ import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { BlockchainService } from '../blockchain/blockchain.service';
 
-interface SRSResult {
+export interface SRSResult {
   easeFactor: number;
   intervalDays: number;
   repetitions: number;
   nextReviewDate: Date;
 }
 
-interface ReviewCard {
+export interface ReviewCard {
   id: string;
   wordHebrew: string;
   wordEnglish: string;

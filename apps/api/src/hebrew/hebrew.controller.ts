@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, Param, UseGuards } from '@nestjs/common';
-import { HebrewService } from './hebrew.service';
+import { HebrewService, ReviewCard } from './hebrew.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 
@@ -12,7 +12,7 @@ export class HebrewController {
   async getReviewCards(
     @GetUser() user: any,
     @Query('limit') limit?: string
-  ) {
+  ): Promise<ReviewCard[]> {
     const limitNum = limit ? parseInt(limit) : 20;
     return this.hebrewService.getReviewCards(user.id, limitNum);
   }
@@ -38,7 +38,7 @@ export class HebrewController {
   async getNewCards(
     @GetUser() user: any,
     @Query('limit') limit?: string
-  ) {
+  ): Promise<ReviewCard[]> {
     const limitNum = limit ? parseInt(limit) : 5;
     return this.hebrewService.getNewCards(user.id, limitNum);
   }

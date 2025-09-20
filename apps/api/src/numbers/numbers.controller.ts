@@ -65,7 +65,7 @@ export class NumbersController {
       equal: gematria1.value === gematria2.value,
       difference: Math.abs(gematria1.value - gematria2.value),
       ratio: gematria2.value !== 0 ? gematria1.value / gematria2.value : null,
-      patterns: []
+      patterns: [] as any[]
     };
 
     // Find patterns in both values
@@ -101,8 +101,8 @@ export class NumbersController {
     return letters.map(letter => {
       const numerology = this.numbersService.calculateHebrewNumerology(letter);
       return {
-        letter,
-        ...numerology.letterMeanings[0]
+        ...numerology.letterMeanings[0],
+        letter
       };
     });
   }

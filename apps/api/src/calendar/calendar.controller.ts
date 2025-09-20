@@ -96,7 +96,7 @@ export class CalendarController {
     const isNewMoon = await this.calendarService.isNewMoon();
     const upcomingFeasts = await this.calendarService.getUpcomingFeasts(3);
 
-    let sabbathTimes = null;
+    let sabbathTimes: any = null;
     if (latitude && longitude) {
       const lat = parseFloat(latitude);
       const lon = parseFloat(longitude);
@@ -124,7 +124,7 @@ export class CalendarController {
     const targetMonth = month ? parseInt(month) : new Date().getMonth() + 1;
 
     const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
-    const monthData = [];
+    const monthData: any[] = [];
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(targetYear, targetMonth - 1, day);
