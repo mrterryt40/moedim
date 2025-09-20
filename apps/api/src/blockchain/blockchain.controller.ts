@@ -20,7 +20,7 @@ export class BlockchainController {
   constructor(private readonly blockchainService: BlockchainService) {}
 
   @Post('create')
-  async createWallet(@GetUser() user: any): Promise<WalletCreationResult> {
+  async createWallet(@GetUser() user: any): Promise<{ address: string }> {
     return this.blockchainService.createWallet(user.id);
   }
 
@@ -198,7 +198,22 @@ export class BlockchainController {
   }
 
   @Get('portfolio')
-  async getPortfolio(@GetUser() user: any): Promise<WalletBalance> {
+  async getPortfolio(@GetUser() user: any): Promise<{
+    balance: WalletBalance;
+    metrics: {
+      totalEarned: number;
+      totalSpent: number;
+      netGain: number;
+      transactionCount: number;
+    };
+    recentActivity: any[];
+    achievementEligible: {
+      firstTransaction: boolean;
+      stakingBeginner: boolean;
+      earlyAdopter: boolean;
+      benefactor: boolean;
+    };
+  }> {
     const balance = await this.blockchainService.getBalance(user.id);
     const transactions = await this.blockchainService.getUserTransactions(user.id, 1, 10);
 

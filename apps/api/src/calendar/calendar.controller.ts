@@ -63,7 +63,7 @@ export class CalendarController {
   }
 
   @Get('feast/:name')
-  async getFeastByName(@Param('name') name: string): Promise<BiblicalFeast> {
+  async getFeastByName(@Param('name') name: string): Promise<BiblicalFeast | null> {
     return this.calendarService.getFeastByName(name);
   }
 
