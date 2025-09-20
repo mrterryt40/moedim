@@ -1,0 +1,14 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install && cd apps/api && npm run build"
+
+[deploy]
+startCommand = "cd apps/api && npm run start:prod"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[environments.production.variables]
+NODE_ENV = "production"
+PORT = "3000"
+JWT_SECRET = "moedim-super-secret-jwt-key-production-5785"
+CORS_ORIGIN = "*"
