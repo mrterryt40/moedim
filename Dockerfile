@@ -43,6 +43,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # ✅ Copy the generated Prisma client from build stage to override deps version
 COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
+# ✅ Copy the .prisma directory containing generated client code
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+
 # Quick assert to avoid silent misconfig
 RUN node -e "const p=require('./package.json'); if(!p.workspaces) { process.exit(1) }"
 
