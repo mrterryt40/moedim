@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
-interface HebrewDate {
+export interface HebrewDate {
   day: number;
   month: string;
   year: number;
   formatted: string;
 }
 
-interface SunsetTimes {
+export interface SunsetTimes {
   candleLighting: Date;
   havdalah: Date;
 }
 
-interface BiblicalFeast {
+export interface BiblicalFeast {
   name: string;
   nameHebrew: string;
   description: string;

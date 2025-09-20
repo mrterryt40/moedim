@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-interface GematriaResult {
+export interface GematriaResult {
   text: string;
   value: number;
   method: string;
@@ -9,7 +9,7 @@ interface GematriaResult {
   biblicalReferences?: string[];
 }
 
-interface NumerologyResult {
+export interface NumerologyResult {
   number: number;
   hebrewMeaning: string;
   biblicalSignificance: string;
@@ -17,7 +17,7 @@ interface NumerologyResult {
   symbolism: string[];
 }
 
-interface BiblicalCycle {
+export interface BiblicalCycle {
   name: string;
   length: number;
   description: string;

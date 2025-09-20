@@ -3,25 +3,25 @@ import { PrismaClient } from '@prisma/client';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
 
-interface WalletCreationResult {
+export interface WalletCreationResult {
   address: string;
   encryptedPrivateKey: string;
 }
 
-interface TransferResult {
+export interface TransferResult {
   transactionHash: string;
   blockNumber?: number;
   gasUsed?: string;
 }
 
-interface StakeResult {
+export interface StakeResult {
   transactionHash: string;
   unlockDate: Date;
   stakingPeriod: number;
   rewardRate: number;
 }
 
-interface WalletBalance {
+export interface WalletBalance {
   balance: string;
   balanceFormatted: string;
   usdValue: number;

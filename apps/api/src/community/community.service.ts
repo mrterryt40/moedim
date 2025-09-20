@@ -1,19 +1,19 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
-interface CreateCircleDto {
+export interface CreateCircleDto {
   name: string;
   description?: string;
   maxMembers?: number;
   isPrivate?: boolean;
 }
 
-interface SendMessageDto {
+export interface SendMessageDto {
   content: string;
   messageType?: 'text' | 'image' | 'audio';
 }
 
-interface CircleWithStats {
+export interface CircleWithStats {
   id: string;
   name: string;
   description?: string;
