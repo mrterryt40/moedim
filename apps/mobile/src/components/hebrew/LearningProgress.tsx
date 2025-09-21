@@ -3,19 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import { Typography } from '../ui/Typography';
 import { Card } from '../ui/Card';
 import { designTokens } from '../../theme/tokens';
+import type { HebrewStats } from '../../types';
 
 interface LearningProgressProps {
-  progress: {
-    totalCards: number;
-    reviewedToday: number;
-    dueCards: number;
-    newCards: number;
-    masteredCards: number;
-    currentLevel: number;
-    nextReviewTime?: string;
-    streakDays: number;
-    accuracy: number;
-  };
+  progress: HebrewStats;
 }
 
 export const LearningProgress: React.FC<LearningProgressProps> = ({
@@ -45,6 +36,21 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
     if (level >= 2) return 'Growing Student';
     return 'Beginning Student';
   };
+
+  // Extract values with defaults
+  const {
+    totalCards = 0,
+    reviewedToday = 0,
+    dueCards = 0,
+    newCards = 0,
+    masteredCards = 0,
+    streakDays = 0,
+    accuracy = 0,
+    completionPercentage = 0
+  } = progress;
+
+  // Calculate level based on mastered cards
+  const currentLevel = Math.floor(masteredCards / 10) + 1;
 
   const formatNextReview = (nextReviewTime?: string) => {
     if (!nextReviewTime) return 'No reviews scheduled';
@@ -76,20 +82,20 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
       <View style={styles.levelSection}>
         <View style={styles.levelIcon}>
           <Typography style={styles.levelEmoji}>
-            {getLevelEmoji(progress.currentLevel)}
+            {getLevelEmoji(currentLevel)}
           </Typography>
         </View>
         <View style={styles.levelContent}>
           <Typography variant="h2" style={styles.levelNumber}>
-            Level {progress.currentLevel}
+            Level {currentLevel}
           </Typography>
           <Typography variant="body" style={styles.levelTitle}>
-            {getLevelTitle(progress.currentLevel)}
+            {getLevelTitle(currentLevel)}
           </Typography>
         </View>
         <View style={styles.accuracyBadge}>
-          <Typography variant="h3" style={[styles.accuracyText, { color: getAccuracyColor(progress.accuracy) }]}>
-            {progress.accuracy}%
+          <Typography variant="h3" style={[styles.accuracyText, { color: getAccuracyColor(accuracy) }]}>
+            {accuracy}%
           </Typography>
           <Typography variant="caption" style={styles.accuracyLabel}>
             Accuracy
@@ -103,7 +109,7 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
       <View style={styles.progressGrid}>
         <View style={styles.progressItem}>
           <Typography variant="h3" style={[styles.progressNumber, { color: designTokens.colors.accent.emerald }]}>
-            {progress.reviewedToday}
+            {reviewedToday}
           </Typography>
           <Typography variant="caption" style={styles.progressLabel}>
             Reviewed Today
@@ -112,7 +118,7 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
 
         <View style={styles.progressItem}>
           <Typography variant="h3" style={[styles.progressNumber, { color: designTokens.colors.accent.crimson }]}>
-            {progress.dueCards}
+            {dueCards}
           </Typography>
           <Typography variant="caption" style={styles.progressLabel}>
             Due Now
@@ -121,7 +127,7 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
 
         <View style={styles.progressItem}>
           <Typography variant="h3" style={[styles.progressNumber, { color: designTokens.colors.primary.indigo }]}>
-            {progress.newCards}
+            {newCards}
           </Typography>
           <Typography variant="caption" style={styles.progressLabel}>
             New Cards
@@ -130,7 +136,7 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
 
         <View style={styles.progressItem}>
           <Typography variant="h3" style={[styles.progressNumber, { color: designTokens.colors.secondary.gold }]}>
-            {progress.masteredCards}
+            {masteredCards}
           </Typography>
           <Typography variant="caption" style={styles.progressLabel}>
             Mastered
@@ -143,11 +149,11 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
       {/* Next Review Section */}
       <View style={styles.nextReviewSection}>
         <Typography variant="caption" style={styles.nextReviewLabel}>
-          📅 {formatNextReview(progress.nextReviewTime)}
+          📅 No reviews scheduled
         </Typography>
-        {progress.streakDays > 0 && (
+        {streakDays > 0 && (
           <Typography variant="caption" style={styles.streakText}>
-            🔥 {progress.streakDays} day learning streak
+            🔥 {streakDays} day learning streak
           </Typography>
         )}
       </View>
@@ -159,7 +165,7 @@ export const LearningProgress: React.FC<LearningProgressProps> = ({
             style={[
               styles.progressBar,
               {
-                width: `${Math.min((progress.masteredCards / progress.totalCards) * 100, 100)}%`,
+                width: `${Math.min((masteredCards / Math.max(totalCards, 1)) * 100, 100)}%`,
                 backgroundColor: designTokens.colors.secondary.gold
               }
             ]}

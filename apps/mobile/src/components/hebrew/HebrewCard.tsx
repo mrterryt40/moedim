@@ -4,19 +4,10 @@ import { Typography } from '../ui/Typography';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { designTokens } from '../../theme/tokens';
+import type { ReviewCard } from '../../types';
 
 interface HebrewCardProps {
-  card: {
-    id: string;
-    hebrew: string;
-    english: string;
-    transliteration: string;
-    category: string;
-    difficulty: 'beginner' | 'intermediate' | 'advanced';
-    gematria?: number;
-    rootWord?: string;
-    usage?: string;
-  };
+  card: ReviewCard;
   onReview: (cardId: string, quality: number) => void;
   showAnswer: boolean;
   onToggleAnswer: () => void;
@@ -28,17 +19,16 @@ export const HebrewCard: React.FC<HebrewCardProps> = ({
   showAnswer,
   onToggleAnswer,
 }) => {
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner':
-        return designTokens.colors.accent.emerald;
-      case 'intermediate':
-        return designTokens.colors.secondary.gold;
-      case 'advanced':
-        return designTokens.colors.accent.crimson;
-      default:
-        return designTokens.colors.neutral.gray500;
-    }
+  const getDifficultyColor = (difficultyLevel: number) => {
+    if (difficultyLevel <= 2) return designTokens.colors.accent.emerald;      // Beginner
+    if (difficultyLevel <= 4) return designTokens.colors.secondary.gold;     // Intermediate
+    return designTokens.colors.accent.crimson;                               // Advanced
+  };
+
+  const getDifficultyLabel = (difficultyLevel: number) => {
+    if (difficultyLevel <= 2) return 'Beginner';
+    if (difficultyLevel <= 4) return 'Intermediate';
+    return 'Advanced';
   };
 
   const qualityButtons = [
@@ -57,9 +47,9 @@ export const HebrewCard: React.FC<HebrewCardProps> = ({
             {card.category}
           </Typography>
         </View>
-        <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(card.difficulty) }]}>
+        <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(card.difficultyLevel) }]}>
           <Typography variant="caption" style={styles.difficultyText}>
-            {card.difficulty}
+            {getDifficultyLabel(card.difficultyLevel)}
           </Typography>
         </View>
       </View>
@@ -68,7 +58,7 @@ export const HebrewCard: React.FC<HebrewCardProps> = ({
       <Pressable onPress={onToggleAnswer} style={styles.cardContent}>
         <View style={styles.hebrewSection}>
           <Typography variant="hebrew" style={styles.hebrewText}>
-            {card.hebrew}
+            {card.wordHebrew}
           </Typography>
           <Typography variant="body" style={styles.transliteration}>
             {card.transliteration}
@@ -81,41 +71,37 @@ export const HebrewCard: React.FC<HebrewCardProps> = ({
             <View style={styles.divider} />
 
             <Typography variant="h2" style={styles.englishText}>
-              {card.english}
+              {card.wordEnglish}
             </Typography>
 
-            {card.gematria && (
+            {card.gematriaValue && (
               <View style={styles.detailRow}>
                 <Typography variant="caption" style={styles.detailLabel}>
                   Gematria:
                 </Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  {card.gematria}
+                  {card.gematriaValue}
                 </Typography>
               </View>
             )}
 
-            {card.rootWord && (
-              <View style={styles.detailRow}>
-                <Typography variant="caption" style={styles.detailLabel}>
-                  Root:
-                </Typography>
-                <Typography variant="hebrew" style={styles.rootText}>
-                  {card.rootWord}
-                </Typography>
-              </View>
-            )}
+            <View style={styles.detailRow}>
+              <Typography variant="caption" style={styles.detailLabel}>
+                Repetitions:
+              </Typography>
+              <Typography variant="body" style={styles.detailValue}>
+                {card.repetitions}
+              </Typography>
+            </View>
 
-            {card.usage && (
-              <View style={styles.usageSection}>
-                <Typography variant="caption" style={styles.detailLabel}>
-                  Usage:
-                </Typography>
-                <Typography variant="body" style={styles.usageText}>
-                  {card.usage}
-                </Typography>
-              </View>
-            )}
+            <View style={styles.detailRow}>
+              <Typography variant="caption" style={styles.detailLabel}>
+                Ease Factor:
+              </Typography>
+              <Typography variant="body" style={styles.detailValue}>
+                {card.easeFactor.toFixed(1)}
+              </Typography>
+            </View>
           </View>
         )}
       </Pressable>

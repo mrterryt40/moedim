@@ -12,46 +12,21 @@ import { AnimatedCard } from '../components/ui/AnimatedCard';
 import { HebrewCard } from '../components/hebrew/HebrewCard';
 import { LearningProgress } from '../components/hebrew/LearningProgress';
 import { designTokens } from '../theme/tokens';
+import { hebrewService } from '../services';
 
-interface HebrewCard {
-  id: string;
-  hebrew: string;
-  english: string;
-  transliteration: string;
-  category: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  gematria?: number;
-  rootWord?: string;
-  usage?: string;
-  nextReview: string;
-  interval: number;
-  easeFactor: number;
-  repetitions: number;
-}
+import type { ReviewCard, HebrewStats } from '../types';
 
 interface LearningSession {
-  cards: HebrewCard[];
+  cards: ReviewCard[];
   currentIndex: number;
   sessionType: 'review' | 'learn' | 'mixed';
   totalCards: number;
 }
 
-interface Progress {
-  totalCards: number;
-  reviewedToday: number;
-  dueCards: number;
-  newCards: number;
-  masteredCards: number;
-  currentLevel: number;
-  nextReviewTime?: string;
-  streakDays: number;
-  accuracy: number;
-}
-
 export const HebrewLearningScreen: React.FC = () => {
-  const [progress, setProgress] = useState<Progress | null>(null);
+  const [progress, setProgress] = useState<HebrewStats | null>(null);
   const [session, setSession] = useState<LearningSession | null>(null);
-  const [currentCard, setCurrentCard] = useState<HebrewCard | null>(null);
+  const [currentCard, setCurrentCard] = useState<ReviewCard | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
@@ -64,30 +39,25 @@ export const HebrewLearningScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch progress data
-      const progressResponse = await fetch('http://localhost:3000/hebrew/progress');
-      let progressData: Progress = {
+      // Fetch Hebrew learning statistics from the card system
+      const stats = await hebrewService.getStats();
+      setProgress(stats);
+    } catch (error) {
+      console.error('Error fetching progress data:', error);
+
+      // Fall back to mock data if API fails
+      const mockProgress: HebrewStats = {
         totalCards: 150,
         reviewedToday: 12,
         dueCards: 8,
         newCards: 5,
         masteredCards: 65,
-        currentLevel: 3,
-        nextReviewTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
         streakDays: 7,
-        accuracy: 87
+        accuracy: 87,
+        completionPercentage: 65,
+        wordsLearned: 23
       };
-
-      try {
-        progressData = await progressResponse.json();
-      } catch (error) {
-        console.log('Using mock progress data');
-      }
-
-      setProgress(progressData);
-    } catch (error) {
-      console.error('Error fetching progress data:', error);
-      Alert.alert('Error', 'Failed to load learning progress');
+      setProgress(mockProgress);
     } finally {
       setLoading(false);
     }
@@ -97,66 +67,39 @@ export const HebrewLearningScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(`http://localhost:3000/hebrew/session?type=${sessionType}`);
+      let cards: ReviewCard[] = [];
 
-      // Mock session data
-      let sessionData: LearningSession = {
-        cards: [
-          {
-            id: '1',
-            hebrew: 'שָׁלוֹם',
-            english: 'Peace, Wholeness',
-            transliteration: 'Shalom',
-            category: 'Common Words',
-            difficulty: 'beginner',
-            gematria: 376,
-            rootWord: 'שלם',
-            usage: 'Greeting meaning peace, completeness, or well-being. Root of Jerusalem.',
-            nextReview: new Date().toISOString(),
-            interval: 1,
-            easeFactor: 2.5,
-            repetitions: 0
-          },
-          {
-            id: '2',
-            hebrew: 'תּוֹרָה',
-            english: 'Torah, Teaching',
-            transliteration: 'Torah',
-            category: 'Religious Terms',
-            difficulty: 'beginner',
-            gematria: 611,
-            rootWord: 'ירה',
-            usage: 'The first five books of Scripture containing YHWH\'s teachings and laws.',
-            nextReview: new Date().toISOString(),
-            interval: 1,
-            easeFactor: 2.5,
-            repetitions: 0
-          },
-          {
-            id: '3',
-            hebrew: 'יְהוָה',
-            english: 'YHWH, The Eternal',
-            transliteration: 'YHWH',
-            category: 'Sacred Names',
-            difficulty: 'intermediate',
-            gematria: 26,
-            usage: 'The sacred name of the Almighty, often replaced with Adonai in reading.',
-            nextReview: new Date().toISOString(),
-            interval: 1,
-            easeFactor: 2.5,
-            repetitions: 0
-          }
-        ],
+      // Get cards based on session type
+      if (sessionType === 'review') {
+        cards = await hebrewService.getReviewCards(20);
+      } else if (sessionType === 'learn') {
+        cards = await hebrewService.getNewCards(5);
+      } else {
+        // Mixed - get both review and new cards
+        const [reviewCards, newCards] = await Promise.all([
+          hebrewService.getReviewCards(10),
+          hebrewService.getNewCards(3)
+        ]);
+        cards = [...reviewCards, ...newCards];
+      }
+
+      if (cards.length === 0) {
+        Alert.alert(
+          'No Cards Available',
+          sessionType === 'review'
+            ? 'No cards are due for review right now. Come back later!'
+            : 'No new cards available to learn at the moment.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      const sessionData: LearningSession = {
+        cards,
         currentIndex: 0,
         sessionType,
-        totalCards: 3
+        totalCards: cards.length
       };
-
-      try {
-        sessionData = await response.json();
-      } catch (error) {
-        console.log('Using mock session data');
-      }
 
       setSession(sessionData);
       setCurrentCard(sessionData.cards[0]);
@@ -174,12 +117,8 @@ export const HebrewLearningScreen: React.FC = () => {
     if (!session || !currentCard) return;
 
     try {
-      // Submit review to backend
-      await fetch('http://localhost:3000/hebrew/review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId, quality })
-      });
+      // Submit review to the spaced repetition system
+      const result = await hebrewService.submitReview(cardId, quality);
 
       // Move to next card or complete session
       const nextIndex = session.currentIndex + 1;
@@ -192,11 +131,23 @@ export const HebrewLearningScreen: React.FC = () => {
         // Refresh progress data
         await fetchProgressData();
 
-        Alert.alert(
-          'Session Complete! 🎉',
-          `Great work! You've completed ${session.cards.length} cards and earned Dominion Coins.`,
-          [{ text: 'Continue Learning', onPress: () => setSession(null) }]
-        );
+        const message = result.coinsEarned
+          ? `Great work! You've completed ${session.cards.length} cards and earned ${result.coinsEarned} Dominion Coins.`
+          : `Great work! You've completed ${session.cards.length} cards.`;
+
+        if (result.newStreak) {
+          Alert.alert(
+            'Session Complete! 🎉',
+            `${message}\n\nCurrent streak: ${result.newStreak} days!`,
+            [{ text: 'Continue Learning', onPress: () => setSession(null) }]
+          );
+        } else {
+          Alert.alert(
+            'Session Complete! 🎉',
+            message,
+            [{ text: 'Continue Learning', onPress: () => setSession(null) }]
+          );
+        }
       } else {
         // Move to next card
         const updatedSession = {
@@ -310,7 +261,7 @@ export const HebrewLearningScreen: React.FC = () => {
           </Typography>
 
           <View style={styles.optionButtons}>
-            {progress?.dueCards > 0 && (
+            {(progress?.dueCards ?? 0) > 0 && (
               <Button
                 variant="primary"
                 onPress={() => startLearningSession('review')}
@@ -321,13 +272,13 @@ export const HebrewLearningScreen: React.FC = () => {
                     Review Cards
                   </Typography>
                   <Typography variant="caption" style={styles.buttonSubtitle}>
-                    {progress.dueCards} cards due
+                    {progress?.dueCards ?? 0} cards due
                   </Typography>
                 </View>
               </Button>
             )}
 
-            {progress?.newCards > 0 && (
+            {(progress?.newCards ?? 0) > 0 && (
               <Button
                 variant="secondary"
                 onPress={() => startLearningSession('learn')}
@@ -338,7 +289,7 @@ export const HebrewLearningScreen: React.FC = () => {
                     Learn New Words
                   </Typography>
                   <Typography variant="caption" style={styles.buttonSubtitle}>
-                    {progress.newCards} new cards
+                    {progress?.newCards ?? 0} new cards
                   </Typography>
                 </View>
               </Button>
@@ -371,9 +322,9 @@ export const HebrewLearningScreen: React.FC = () => {
           <Typography variant="body" style={styles.statsText}>
             Study Hebrew for at least 10 minutes to maintain your streak and earn Dominion Coins.
           </Typography>
-          {progress && progress.streakDays > 0 && (
+          {progress && (progress.streakDays ?? 0) > 0 && (
             <Typography variant="caption" style={styles.streakReminder}>
-              🔥 Keep your {progress.streakDays}-day streak alive!
+              🔥 Keep your {progress.streakDays ?? 0}-day streak alive!
             </Typography>
           )}
         </View>

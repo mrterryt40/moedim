@@ -14,6 +14,7 @@ import { AnimatedCard } from '../components/ui/AnimatedCard';
 import { ProductCard } from '../components/marketplace/ProductCard';
 import { CategoryFilter } from '../components/marketplace/CategoryFilter';
 import { designTokens } from '../theme/tokens';
+import { marketplaceService } from '../services';
 
 interface Product {
   id: string;
@@ -74,8 +75,61 @@ export const MarketplaceScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Mock marketplace data with Israelite products
-      const mockProducts: Product[] = [
+      // Try to fetch real data from API
+      const [productsResponse, categoriesResponse] = await Promise.allSettled([
+        marketplaceService.getProducts({ limit: 20 }),
+        marketplaceService.getCategories()
+      ]);
+
+      let products: Product[] = [];
+      let categories: Category[] = [];
+
+      // Handle products response
+      if (productsResponse.status === 'fulfilled') {
+        products = productsResponse.value.data.map(product => ({
+          id: product.id,
+          name: product.name,
+          hebrewName: product.hebrewName,
+          description: product.description,
+          price: product.price,
+          discountedPrice: product.salePrice,
+          category: product.category,
+          imageUrl: product.images?.[0],
+          seller: {
+            name: product.seller?.name || 'Unknown Seller',
+            rating: product.seller?.rating || 5,
+            isVerified: product.seller?.verified || false,
+          },
+          tags: product.tags || [],
+          inStock: product.inStock,
+          stockCount: product.stock,
+          isKosher: product.kosher,
+          isCertified: product.certified,
+          rating: product.rating || 5,
+          reviewCount: product.reviewCount || 0,
+        }));
+      }
+
+      // Handle categories response
+      if (categoriesResponse.status === 'fulfilled') {
+        categories = categoriesResponse.value.map((cat, index) => ({
+          id: cat.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: cat,
+          icon: ['📜', '🕯️', '📚', '🍷', '👕'][index % 5],
+          count: Math.floor(Math.random() * 50) + 5,
+          color: [
+            designTokens.colors.primary.indigo,
+            designTokens.colors.secondary.gold,
+            designTokens.colors.accent.emerald,
+            designTokens.colors.accent.crimson,
+            designTokens.colors.primary.indigoLight,
+          ][index % 5],
+        }));
+      }
+
+      // Fall back to mock data if API fails or returns no data
+      if (products.length === 0) {
+        products = [
         {
           id: '1',
           name: 'Torah Scroll (Sefer Torah)',
@@ -197,9 +251,11 @@ export const MarketplaceScreen: React.FC = () => {
           rating: 4,
           reviewCount: 78,
         },
-      ];
+        ];
+      }
 
-      const mockCategories: Category[] = [
+      if (categories.length === 0) {
+        categories = [
         {
           id: 'torah-scrolls',
           name: 'Torah Scrolls',
@@ -240,13 +296,11 @@ export const MarketplaceScreen: React.FC = () => {
           count: 34,
           color: designTokens.colors.accent.crimson,
         },
-      ];
+        ];
+      }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setProducts(mockProducts);
-      setCategories(mockCategories);
+      setProducts(products);
+      setCategories(categories);
     } catch (error) {
       console.error('Error fetching marketplace data:', error);
       Alert.alert('Error', 'Failed to load marketplace data');

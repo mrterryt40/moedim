@@ -1,11 +1,74 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Typography } from '../components/ui/Typography';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { designTokens } from '../theme/tokens';
+import { calendarService, hebrewService, communityService, marketplaceService } from '../services';
 
 export const DashboardScreen: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<{
+    todayInfo: any;
+    progress: any;
+    featuredProducts: any[];
+    circlesCount: number;
+    error: string | null;
+  }>({
+    todayInfo: null,
+    progress: null,
+    featuredProducts: [],
+    circlesCount: 0,
+    error: null,
+  });
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Load data from multiple services in parallel
+      const [todayInfo, progress, featuredProducts, circles] = await Promise.allSettled([
+        calendarService.getTodayInfo(),
+        hebrewService.getProgress().catch(() => null), // Optional - user might not be logged in
+        marketplaceService.getFeaturedProducts(),
+        communityService.getCircles().catch(() => []), // Optional - user might not be logged in
+      ]);
+
+      setDashboardData({
+        todayInfo: todayInfo.status === 'fulfilled' ? todayInfo.value : null,
+        progress: progress.status === 'fulfilled' ? progress.value : null,
+        featuredProducts: featuredProducts.status === 'fulfilled' ? featuredProducts.value.slice(0, 2) : [],
+        circlesCount: circles.status === 'fulfilled' ? circles.value.length : 0,
+        error: null,
+      });
+    } catch (error) {
+      console.error('Dashboard load error:', error);
+      setDashboardData(prev => ({
+        ...prev,
+        error: 'Failed to load dashboard data'
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={designTokens.colors.primary.indigo} />
+        <Typography variant="body" style={styles.loadingText}>
+          Loading dashboard...
+        </Typography>
+      </View>
+    );
+  }
+
+  const { todayInfo, progress, featuredProducts, circlesCount } = dashboardData;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Welcome Header */}
@@ -47,32 +110,47 @@ export const DashboardScreen: React.FC = () => {
             Hebrew Date
           </Typography>
           <Typography variant="hebrew" style={styles.hebrewDate}>
-            כ״ג תשרי ה׳תשפ״ה
+            {todayInfo?.hebrewDate?.hebrewName || 'Loading...'}
           </Typography>
         </View>
 
-        <View style={styles.todaySection}>
-          <Typography variant="h3" style={styles.todayLabel}>
-            Today's Feast
-          </Typography>
-          <Typography variant="body" style={styles.todayValue}>
-            Simchat Torah Celebration
-          </Typography>
-        </View>
-
-        <View style={styles.todaySection}>
-          <Typography variant="h3" style={styles.todayLabel}>
-            Hebrew Learning Progress
-          </Typography>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: '65%' }]} />
-            </View>
-            <Typography variant="caption" style={styles.progressText}>
-              65% complete - 23 words learned this week
+        {todayInfo?.feasts && todayInfo.feasts.length > 0 && (
+          <View style={styles.todaySection}>
+            <Typography variant="h3" style={styles.todayLabel}>
+              Today's Feast
+            </Typography>
+            <Typography variant="body" style={styles.todayValue}>
+              {todayInfo.feasts[0].name}
             </Typography>
           </View>
-        </View>
+        )}
+
+        {todayInfo?.nextFeast && (
+          <View style={styles.todaySection}>
+            <Typography variant="h3" style={styles.todayLabel}>
+              Next Feast
+            </Typography>
+            <Typography variant="body" style={styles.todayValue}>
+              {todayInfo.nextFeast.name}
+            </Typography>
+          </View>
+        )}
+
+        {progress && (
+          <View style={styles.todaySection}>
+            <Typography variant="h3" style={styles.todayLabel}>
+              Hebrew Learning Progress
+            </Typography>
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${progress.completionPercentage || 0}%` }]} />
+              </View>
+              <Typography variant="caption" style={styles.progressText}>
+                {progress.completionPercentage || 0}% complete - {progress.wordsLearned || 0} words learned
+              </Typography>
+            </View>
+          </View>
+        )}
       </Card>
 
       {/* Community Highlights */}
@@ -83,19 +161,21 @@ export const DashboardScreen: React.FC = () => {
 
         <View style={styles.communityItem}>
           <Typography variant="body" style={styles.communityText}>
-            🔥 5 new Torah discussions active
+            🔥 {circlesCount} active community circles
           </Typography>
         </View>
 
-        <View style={styles.communityItem}>
-          <Typography variant="body" style={styles.communityText}>
-            📖 Weekly Parsha study group: Thursday 7 PM
-          </Typography>
-        </View>
+        {todayInfo?.parasha && (
+          <View style={styles.communityItem}>
+            <Typography variant="body" style={styles.communityText}>
+              📖 This week's Parsha: {todayInfo.parasha.name}
+            </Typography>
+          </View>
+        )}
 
         <View style={styles.communityItem}>
           <Typography variant="body" style={styles.communityText}>
-            🏪 12 new marketplace items from local artisans
+            🏪 {featuredProducts.length} featured marketplace items
           </Typography>
         </View>
       </Card>
@@ -106,23 +186,24 @@ export const DashboardScreen: React.FC = () => {
           Featured Marketplace Items
         </Typography>
 
-        <View style={styles.featuredItem}>
-          <Typography variant="h3" style={styles.featuredTitle}>
-            🕯️ Handcrafted Sabbath Candles
-          </Typography>
-          <Typography variant="body" style={styles.featuredPrice}>
-            $45.00
-          </Typography>
-        </View>
-
-        <View style={styles.featuredItem}>
-          <Typography variant="h3" style={styles.featuredTitle}>
-            📖 Hebrew Learning Flashcards
-          </Typography>
-          <Typography variant="body" style={styles.featuredPrice}>
-            $25.00
-          </Typography>
-        </View>
+        {featuredProducts.length > 0 ? (
+          featuredProducts.map((product, index) => (
+            <View key={product.id || index} style={styles.featuredItem}>
+              <Typography variant="h3" style={styles.featuredTitle}>
+                {product.name}
+              </Typography>
+              <Typography variant="body" style={styles.featuredPrice}>
+                ${product.price?.toFixed(2) || '0.00'}
+              </Typography>
+            </View>
+          ))
+        ) : (
+          <View style={styles.featuredItem}>
+            <Typography variant="body" style={styles.communityText}>
+              No featured products available
+            </Typography>
+          </View>
+        )}
 
         <Button variant="secondary" size="small" style={styles.viewMoreButton}>
           View All Products
@@ -238,5 +319,13 @@ const styles = StyleSheet.create({
   },
   viewMoreButton: {
     marginTop: designTokens.spacing.sm,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: designTokens.spacing.md,
+    color: designTokens.colors.neutral.gray600,
   },
 });
