@@ -1,14 +1,146 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { torahService, hebrewService, calendarService, marketplaceService, communityService, apiService } from './src/services';
 
 export default function App() {
+  const [loading, setLoading] = useState(false);
+  const [hebrewProgress, setHebrewProgress] = useState({ completionPercentage: 0, wordsLearned: 0 });
+  const [todayInfo, setTodayInfo] = useState({ hebrewDate: '', isShabbat: false, upcomingFeasts: [] });
+
+  // Load initial data
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      console.log('🚀 Loading Mo\'edim data...');
+
+      // Test API connection first
+      console.log('📡 API Base URL:', process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000');
+
+      // Load Hebrew progress
+      try {
+        const progress = await hebrewService.getStats();
+        setHebrewProgress(progress);
+        console.log('✅ Hebrew progress loaded:', progress);
+      } catch (error) {
+        console.log('⚠️ Hebrew progress failed, using defaults');
+        setHebrewProgress({ completionPercentage: 65, wordsLearned: 23 });
+      }
+
+      // Load today's calendar info
+      try {
+        const hebrewDate = await calendarService.getHebrewDate();
+        const upcomingFeasts = await calendarService.getUpcomingFeasts();
+        setTodayInfo({
+          hebrewDate: hebrewDate.hebrewName || 'כ״ג תשרי ה׳תשפ״ה',
+          isShabbat: hebrewDate.isShabbat,
+          upcomingFeasts
+        });
+        console.log('✅ Calendar data loaded');
+      } catch (error) {
+        console.log('⚠️ Calendar data failed, using defaults');
+        setTodayInfo({
+          hebrewDate: 'כ״ג תשרי ה׳תשפ״ה',
+          isShabbat: false,
+          upcomingFeasts: []
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Button handlers
+  const handleStudyHebrew = async () => {
+    try {
+      setLoading(true);
+      const reviewCards = await hebrewService.getReviewCards();
+      Alert.alert('Hebrew Study', `You have ${reviewCards.length} cards to review!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load Hebrew study cards. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewCalendar = async () => {
+    try {
+      setLoading(true);
+      const sabbathTimes = await calendarService.getSabbathTimes();
+      Alert.alert('Sabbath Times', `Next Sabbath: ${sabbathTimes.start} - ${sabbathTimes.end}`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load calendar information. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBrowseMarketplace = async () => {
+    try {
+      setLoading(true);
+      const products = await marketplaceService.getProducts();
+      Alert.alert('Marketplace', `Found ${products.length} products available for purchase!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load marketplace. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinCommunity = async () => {
+    try {
+      setLoading(true);
+      const circles = await communityService.getCircles();
+      Alert.alert('Community', `Found ${circles.length} active community circles to join!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load community information. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinDiscussions = async () => {
+    try {
+      setLoading(true);
+      const circles = await communityService.getCircles();
+      Alert.alert('Discussions', `Join one of ${circles.length} active discussion circles!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load discussions. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewProducts = async () => {
+    try {
+      setLoading(true);
+      const featured = await marketplaceService.getFeaturedProducts();
+      Alert.alert('Featured Products', `Browse ${featured.length} featured items in our marketplace!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load products. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>🕊️ Mo'edim</Text>
         <Text style={styles.headerSubtitle}>Israelite Life & Learning</Text>
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        )}
       </View>
 
       {/* Main Content */}
@@ -25,16 +157,32 @@ export default function App() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Quick Actions</Text>
           <View style={styles.actionGrid}>
-            <Pressable style={[styles.actionButton, styles.primaryButton]}>
+            <Pressable
+              style={[styles.actionButton, styles.primaryButton, loading && styles.disabledButton]}
+              onPress={handleStudyHebrew}
+              disabled={loading}
+            >
               <Text style={styles.actionButtonText}>📚 Study Hebrew</Text>
             </Pressable>
-            <Pressable style={[styles.actionButton, styles.secondaryButton]}>
+            <Pressable
+              style={[styles.actionButton, styles.secondaryButton, loading && styles.disabledButton]}
+              onPress={handleViewCalendar}
+              disabled={loading}
+            >
               <Text style={styles.actionButtonText}>📅 View Calendar</Text>
             </Pressable>
-            <Pressable style={[styles.actionButton, styles.primaryButton]}>
+            <Pressable
+              style={[styles.actionButton, styles.primaryButton, loading && styles.disabledButton]}
+              onPress={handleBrowseMarketplace}
+              disabled={loading}
+            >
               <Text style={styles.actionButtonText}>🛒 Browse Marketplace</Text>
             </Pressable>
-            <Pressable style={[styles.actionButton, styles.secondaryButton]}>
+            <Pressable
+              style={[styles.actionButton, styles.secondaryButton, loading && styles.disabledButton]}
+              onPress={handleJoinCommunity}
+              disabled={loading}
+            >
               <Text style={styles.actionButtonText}>👥 Join Community</Text>
             </Pressable>
           </View>
@@ -46,7 +194,7 @@ export default function App() {
 
           <View style={styles.infoSection}>
             <Text style={styles.infoLabel}>Hebrew Date</Text>
-            <Text style={styles.hebrewDate}>כ״ג תשרי ה׳תשפ״ה</Text>
+            <Text style={styles.hebrewDate}>{todayInfo.hebrewDate || 'כ״ג תשרי ה׳תשפ״ה'}</Text>
           </View>
 
           <View style={styles.infoSection}>
@@ -63,9 +211,11 @@ export default function App() {
             <Text style={styles.infoLabel}>Hebrew Learning Progress</Text>
             <View style={styles.progressContainer}>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '65%' }]} />
+                <View style={[styles.progressFill, { width: `${hebrewProgress.completionPercentage || 0}%` }]} />
               </View>
-              <Text style={styles.progressText}>65% complete - 23 words learned this week</Text>
+              <Text style={styles.progressText}>
+                {hebrewProgress.completionPercentage || 0}% complete - {hebrewProgress.wordsLearned || 0} words learned this week
+              </Text>
             </View>
           </View>
         </View>
@@ -86,7 +236,11 @@ export default function App() {
             <Text style={styles.communityText}>🏪 12 new marketplace items from local artisans</Text>
           </View>
 
-          <Pressable style={[styles.actionButton, styles.primaryButton, styles.fullWidthButton]}>
+          <Pressable
+            style={[styles.actionButton, styles.primaryButton, styles.fullWidthButton, loading && styles.disabledButton]}
+            onPress={handleJoinDiscussions}
+            disabled={loading}
+          >
             <Text style={styles.actionButtonText}>Join Discussions</Text>
           </Pressable>
         </View>
@@ -119,7 +273,11 @@ export default function App() {
             <Text style={styles.featuredPrice}>$89.00</Text>
           </View>
 
-          <Pressable style={[styles.actionButton, styles.secondaryButton, styles.fullWidthButton]}>
+          <Pressable
+            style={[styles.actionButton, styles.secondaryButton, styles.fullWidthButton, loading && styles.disabledButton]}
+            onPress={handleViewProducts}
+            disabled={loading}
+          >
             <Text style={styles.actionButtonText}>View All Products</Text>
           </Pressable>
         </View>
@@ -151,6 +309,16 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: '#e0e7ff',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  loadingText: {
+    color: '#ffffff',
+    fontSize: 12,
   },
   content: {
     flex: 1,
@@ -213,6 +381,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#f59e0b',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   actionButtonText: {
     color: '#ffffff',
