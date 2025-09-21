@@ -19,15 +19,34 @@ export default function App() {
       console.log('🚀 Loading Mo\'edim data...');
       console.log('📡 API Base URL:', process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000');
 
-      // Use default data for now to test buttons
-      setHebrewProgress({ completionPercentage: 65, wordsLearned: 23 });
-      setTodayInfo({
-        hebrewDate: 'כ״ג תשרי ה׳תשפ״ה',
-        isShabbat: false,
-        upcomingFeasts: []
-      });
+      // Load Hebrew progress
+      try {
+        const progress = await hebrewService.getStats();
+        setHebrewProgress(progress);
+        console.log('✅ Hebrew progress loaded:', progress);
+      } catch (error) {
+        console.log('⚠️ Hebrew progress failed, using defaults');
+        setHebrewProgress({ completionPercentage: 65, wordsLearned: 23 });
+      }
 
-      console.log('✅ Default data loaded successfully');
+      // Load today's calendar info
+      try {
+        const hebrewDate = await calendarService.getHebrewDate();
+        const upcomingFeasts = await calendarService.getUpcomingFeasts();
+        setTodayInfo({
+          hebrewDate: hebrewDate.hebrewName || 'כ״ג תשרי ה׳תשפ״ה',
+          isShabbat: hebrewDate.isShabbat,
+          upcomingFeasts
+        });
+        console.log('✅ Calendar data loaded');
+      } catch (error) {
+        console.log('⚠️ Calendar data failed, using defaults');
+        setTodayInfo({
+          hebrewDate: 'כ״ג תשרי ה׳תשפ״ה',
+          isShabbat: false,
+          upcomingFeasts: []
+        });
+      }
     } catch (error) {
       console.error('❌ Error loading data:', error);
     } finally {
@@ -47,8 +66,6 @@ export default function App() {
   };
 
   const handleStudyHebrew = async () => {
-    showAlert('Button Test', 'Study Hebrew button clicked! ✅');
-    console.log('Study Hebrew button clicked!');
     try {
       setLoading(true);
       const reviewCards = await hebrewService.getReviewCards();
@@ -61,28 +78,63 @@ export default function App() {
   };
 
   const handleViewCalendar = async () => {
-    showAlert('Button Test', 'View Calendar button clicked! ✅');
-    console.log('View Calendar button clicked!');
+    try {
+      setLoading(true);
+      const sabbathTimes = await calendarService.getSabbathTimes();
+      showAlert('Sabbath Times', `Next Sabbath: ${sabbathTimes.start} - ${sabbathTimes.end}`);
+    } catch (error) {
+      showAlert('Error', 'Failed to load calendar information. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBrowseMarketplace = async () => {
-    showAlert('Button Test', 'Browse Marketplace button clicked! ✅');
-    console.log('Browse Marketplace button clicked!');
+    try {
+      setLoading(true);
+      const products = await marketplaceService.getProducts();
+      showAlert('Marketplace', `Found ${products.length} products available for purchase!`);
+    } catch (error) {
+      showAlert('Error', 'Failed to load marketplace. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleJoinCommunity = async () => {
-    showAlert('Button Test', 'Join Community button clicked! ✅');
-    console.log('Join Community button clicked!');
+    try {
+      setLoading(true);
+      const circles = await communityService.getCircles();
+      showAlert('Community', `Found ${circles.length} active community circles to join!`);
+    } catch (error) {
+      showAlert('Error', 'Failed to load community information. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleJoinDiscussions = async () => {
-    showAlert('Button Test', 'Join Discussions button clicked! ✅');
-    console.log('Join Discussions button clicked!');
+    try {
+      setLoading(true);
+      const circles = await communityService.getCircles();
+      showAlert('Discussions', `Join one of ${circles.length} active discussion circles!`);
+    } catch (error) {
+      showAlert('Error', 'Failed to load discussions. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleViewProducts = async () => {
-    showAlert('Button Test', 'View Products button clicked! ✅');
-    console.log('View Products button clicked!');
+    try {
+      setLoading(true);
+      const featured = await marketplaceService.getFeaturedProducts();
+      showAlert('Featured Products', `Browse ${featured.length} featured items in our marketplace!`);
+    } catch (error) {
+      showAlert('Error', 'Failed to load products. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
